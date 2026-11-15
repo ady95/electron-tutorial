@@ -4,7 +4,14 @@ export const IPC = {
   getSystemInfo: 'system:get-info',
   clockTick: 'clock:tick',
   logMessage: 'log:message',
+  memoryUsage: 'metrics:memory-usage',
 } as const;
+
+// app.getAppMetrics()로 구한 앱 전체 메모리 사용량 요약
+export interface MemoryUsage {
+  totalMB: number;
+  processCount: number;
+}
 
 export interface SystemInfo {
   platform: string;
@@ -25,4 +32,5 @@ export interface ExposedApi {
   getSystemInfo: () => Promise<SystemInfo>;
   logMessage: (message: string) => void;
   onClockTick: (callback: (time: string) => void) => () => void;
+  onMemoryUsage: (callback: (usage: MemoryUsage) => void) => () => void;
 }

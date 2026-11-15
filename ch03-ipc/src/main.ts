@@ -2,7 +2,7 @@ import { app, BrowserWindow, ipcMain } from 'electron';
 import os from 'node:os';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
-import { IPC, type SystemInfo } from './shared/ipc';
+import { IPC, type MemoryUsage, type SystemInfo } from './shared/ipc';
 
 // Windows 설치·제거 시 바로가기 처리 (13장에서 다룸)
 if (started) {
@@ -31,6 +31,23 @@ const createWindow = () => {
     mainWindow.webContents.send(IPC.clockTick, new Date().toLocaleTimeString());
   }, 1000);
   mainWindow.on('closed', () => clearInterval(timer));
+
+  // Main → Renderer: 2초마다 앱 전체 메모리 사용량을 보낸다
+  const memoryTimer = setInterval(() => {
+    mainWindow.webContents.send(IPC.memoryUsage, getMemoryUsage());
+  }, 2000);
+  mainWindow.on('closed', () => clearInterval(memoryTimer));
+};
+
+// 앱의 모든 프로세스(Main, Renderer, GPU 등) 메모리를 합산한다
+// workingSetSize 단위는 KB
+const getMemoryUsage = (): MemoryUsage => {
+  const metrics = app.getAppMetrics();
+  const totalKB = metrics.reduce((sum, m) => sum + m.memory.workingSetSize, 0);
+  return {
+    totalMB: Math.round((totalKB / 1024) * 10) / 10,
+    processCount: metrics.length,
+  };
 };
 
 // Renderer → Main 요청-응답 (invoke ↔ handle)
