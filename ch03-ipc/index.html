@@ -1,0 +1,18 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'"
+    />
+    <title>IPC 실습</title>
+  </head>
+  <body>
+    <h1>Main과 대화하기</h1>
+    <p>현재 시각(Main이 보냄): <span id="clock">-</span></p>
+    <button id="info-button">시스템 정보 가져오기</button>
+    <pre id="info-output"></pre>
+    <script type="module" src="/src/renderer.ts"></script>
+  </body>
+</html>
