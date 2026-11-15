@@ -1,0 +1,45 @@
+body {
+  margin: 0;
+  font-family: 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  font-size: 14px;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.controls input:not([type='checkbox']) {
+  width: 90px;
+  margin-left: 4px;
+}
+
+.preview {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.preview th,
+.preview td {
+  border: 1px solid #ddd;
+  padding: 3px 8px;
+  text-align: left;
+}
+
+.problems {
+  color: #b00020;
+  margin: 0;
+}
+
+.result {
+  font-weight: bold;
+}
