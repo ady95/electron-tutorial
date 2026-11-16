@@ -3,12 +3,11 @@ import path from 'node:path';
 import started from 'electron-squirrel-startup';
 import { IPC } from './shared/ipc';
 import {
-  cancelReport,
+  connectWindow,
   openReport,
-  pythonStatus,
-  runReport,
   selectInput,
-  stopPython,
+  startReport,
+  stopHost,
 } from './main/report';
 import {
   applySecurity,
@@ -35,6 +34,8 @@ const createWindow = () => {
       nodeIntegration: false,
     },
   });
+  // 화면을 (다시) 불러올 때마다 Python 관리자와 새 통로를 연결한다
+  win.webContents.on('did-finish-load', () => connectWindow(win));
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
     setAppUrl(MAIN_WINDOW_VITE_DEV_SERVER_URL);
     win.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
@@ -48,22 +49,18 @@ const createWindow = () => {
   }
 };
 
-handle(IPC.pythonStatus, () => pythonStatus());
-
 handle(IPC.selectInput, (event) => {
   const win = BrowserWindow.fromWebContents(event.sender);
   return win ? selectInput(win) : null;
 });
 
-handle(IPC.runReport, (event, requestId: unknown) => {
+handle(IPC.startReport, (event, jobId: unknown) => {
   const win = BrowserWindow.fromWebContents(event.sender);
-  if (!win || typeof requestId !== 'string' || requestId.length > 100) {
+  if (!win || typeof jobId !== 'string' || jobId.length > 100) {
     return { ok: false, code: 'bad-request', message: '잘못된 요청' };
   }
-  return runReport(win, event.sender, requestId);
+  return startReport(win, jobId);
 });
-
-on(IPC.cancelReport, (_event, requestId: unknown) => cancelReport(requestId));
 
 on(IPC.openReport, () => openReport());
 
@@ -78,5 +75,5 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });
 
-// 앱이 끝날 때 Python 작업자도 끝낸다
-app.on('will-quit', () => stopPython());
+// 앱이 끝날 때 Python 관리자와 작업자도 끝낸다
+app.on('will-quit', () => stopHost());

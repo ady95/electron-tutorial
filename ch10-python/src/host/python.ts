@@ -1,13 +1,7 @@
 import { spawn, type ChildProcess } from 'node:child_process';
 import readline from 'node:readline';
+import type { PythonCommand } from '../shared/host';
 import { encodeRequest, parseWorkerLine } from '../shared/protocol';
-
-// Python 작업자를 실행할 명령. 개발 중에는 python + worker.py, 배포본에서는 PyInstaller로 만든 exe
-export interface PythonCommand {
-  command: string;
-  args: string[];
-  cwd: string;
-}
 
 export class PythonError extends Error {
   constructor(
@@ -68,13 +62,16 @@ export class PythonWorker {
         new PythonError(
           err.code === 'ENOENT' ? 'not-found' : 'spawn-failed',
           err.code === 'ENOENT'
-            ? 'Python 실행 환경을 찾지 못했습니다.'
+            ? `Python 실행 환경을 찾지 못했습니다. ${this.cmd.notFoundHint ?? ''}`.trim()
             : `Python을 실행하지 못했습니다: ${err.message}`,
         ),
       );
     });
     child.on('exit', (code, signal) => {
-      const last = this.stderrTail.at(-1) ?? '';
+      // stderr에는 일반 로그(print)도 섞여 온다. 마지막 줄이 예외 메시지일 때만 안내에 붙인다
+      // 예: "ModuleNotFoundError: No module named 'pandas'"
+      const tail = this.stderrTail.at(-1) ?? '';
+      const last = /^\w+(Error|Exception)\b/.test(tail) ? tail : '';
       this.onExit(
         child,
         new PythonError(

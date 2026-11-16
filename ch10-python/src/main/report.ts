@@ -1,19 +1,17 @@
 import {
   app,
   dialog,
+  MessageChannelMain,
   shell,
+  utilityProcess,
   type BrowserWindow,
-  type WebContents,
+  type MessagePortMain,
+  type UtilityProcess,
 } from 'electron';
 import fs from 'node:fs';
 import path from 'node:path';
-import {
-  IPC,
-  type InputFolder,
-  type PythonStatus,
-  type ReportResult,
-} from '../shared/ipc';
-import { PythonError, PythonWorker, type PythonCommand } from './python';
+import type { HostCommand, HostEvent, PythonCommand } from '../shared/host';
+import { IPC, type InputFolder, type StartResult } from '../shared/ipc';
 
 // 개발 중: python 폴더의 가상 환경(uv sync로 만든 .venv)의 python으로 worker.py를 실행한다
 export function pythonCommand(): PythonCommand {
@@ -24,38 +22,64 @@ export function pythonCommand(): PythonCommand {
       : path.join(dir, '.venv', 'bin', 'python');
   // 이미 쓰던 Python(pandas·openpyxl 설치됨)을 쓰려면 SALES_PYTHON에 경로를 넣는다
   const python = process.env.SALES_PYTHON || venvPython;
-  return { command: python, args: [path.join(dir, 'worker.py')], cwd: dir };
+  return {
+    command: python,
+    args: [path.join(dir, 'worker.py')],
+    cwd: dir,
+    notFoundHint: 'python 폴더에서 uv sync를 실행했는지 확인하세요.',
+  };
 }
 
-const worker = new PythonWorker(pythonCommand());
-const running = new Map<string, number>(); // Renderer의 requestId → 작업자 요청 id
+// --- Python 관리자 (UtilityProcess) ---
+let host: UtilityProcess | null = null;
+let quitting = false;
+const windows = new Set<BrowserWindow>();
 
-// 경로는 Main에만 둔다. Renderer에는 이름만 보낸다
+const send = (m: HostCommand, ports?: MessagePortMain[]) =>
+  host?.postMessage(m, ports);
+
+function startHost() {
+  const child = utilityProcess.fork(
+    path.join(__dirname, 'python-host.cjs'),
+    [],
+    {
+      serviceName: 'Python 작업 관리자', // 작업 관리자에 표시되는 이름
+    },
+  );
+  host = child;
+  send({ type: 'init', python: pythonCommand() });
+  child.on('message', (m: HostEvent) => {
+    if (m.type === 'finished') lastOutput = m.output;
+  });
+  child.on('exit', (code) => {
+    if (host !== child) return;
+    host = null;
+    if (quitting) return;
+    // 관리자가 비정상 종료되면 다시 띄우고, 열려 있는 창마다 새 통로를 연결한다
+    console.warn(`[python-host] 종료됨 (code ${code}). 다시 시작합니다.`);
+    startHost();
+    for (const win of windows) connectWindow(win);
+  });
+}
+
+// 창과 관리자 사이에 MessagePort 통로를 만든다. 한쪽은 화면(Preload)에, 다른 쪽은 관리자에
+export function connectWindow(win: BrowserWindow) {
+  if (!host) startHost();
+  windows.add(win);
+  win.once('closed', () => windows.delete(win));
+  const { port1, port2 } = new MessageChannelMain();
+  send({ type: 'connect' }, [port2]);
+  win.webContents.postMessage(IPC.pythonPort, null, [port1]);
+}
+
+export function stopHost() {
+  quitting = true;
+  send({ type: 'stop' }); // Python 작업자의 표준 입력을 닫아 스스로 끝나게 한다
+}
+
+// --- 대화상자와 경로 (Main에만 둔다. 화면에는 이름만 보낸다) ---
 let inputDir: string | null = null;
 let lastOutput: string | null = null;
-
-const errorMessage = (err: unknown) =>
-  err instanceof PythonError
-    ? { code: err.code, message: err.message }
-    : { code: 'unknown', message: String(err) };
-
-export async function pythonStatus(): Promise<PythonStatus> {
-  try {
-    const r = (await worker.request('hello').result) as {
-      python: string;
-      pandas: string;
-      startupMs: number;
-    };
-    return { ok: true, mode: 'child_process', ...r };
-  } catch (err) {
-    const { code, message } = errorMessage(err);
-    const hint =
-      code === 'not-found' && !app.isPackaged
-        ? ' python 폴더에서 uv sync를 실행했는지 확인하세요.'
-        : '';
-    return { ok: false, message: message + hint };
-  }
-}
 
 const isDataFile = (name: string) =>
   /\.(xlsx|csv)$/i.test(name) && !name.startsWith('~$');
@@ -80,16 +104,14 @@ function today() {
   return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}`;
 }
 
-export async function runReport(
+// 저장 위치를 받은 뒤 관리자에게 작업을 넘긴다. 결과는 관리자가 화면에 직접 보낸다
+export async function startReport(
   win: BrowserWindow,
-  sender: WebContents,
-  requestId: string,
-): Promise<ReportResult> {
-  if (!inputDir)
+  jobId: string,
+): Promise<StartResult> {
+  if (!inputDir) {
     return { ok: false, code: 'no-input', message: '먼저 폴더를 선택하세요.' };
-  if (running.has(requestId))
-    return { ok: false, code: 'busy', message: '이미 실행 중입니다.' };
-
+  }
   const save = await dialog.showSaveDialog(win, {
     title: '보고서 저장',
     defaultPath: path.join(
@@ -105,51 +127,17 @@ export async function runReport(
       message: '저장 위치를 선택하지 않았습니다.',
     };
   }
-
-  const started = Date.now();
-  const { id, result } = worker.request(
-    'report',
-    { inputDir, output: save.filePath },
-    (done, total, file) => {
-      if (!sender.isDestroyed()) {
-        sender.send(IPC.reportProgress, { requestId, done, total, file });
-      }
-    },
-  );
-  running.set(requestId, id);
-  try {
-    const r = (await result) as Record<string, unknown>;
-    lastOutput = String(r.output);
+  if (!host) {
     return {
-      ok: true,
-      summary: {
-        outputName: path.basename(lastOutput),
-        files: Number(r.files),
-        rows: Number(r.rows),
-        total: Number(r.total),
-        branches: r.branches as string[],
-        byMonth: r.byMonth as (string | number)[][],
-        errors: r.errors as { file: string; message: string }[],
-        elapsedMs: Date.now() - started,
-      },
+      ok: false,
+      code: 'no-host',
+      message: 'Python 관리자가 실행 중이 아닙니다.',
     };
-  } catch (err) {
-    return { ok: false, ...errorMessage(err) };
-  } finally {
-    running.delete(requestId);
   }
-}
-
-export function cancelReport(requestId: unknown) {
-  if (typeof requestId !== 'string') return;
-  const id = running.get(requestId);
-  if (id !== undefined) worker.cancel(id);
+  send({ type: 'run', jobId, inputDir, output: save.filePath });
+  return { ok: true };
 }
 
 export function openReport() {
   if (lastOutput) void shell.openPath(lastOutput);
-}
-
-export function stopPython() {
-  worker.stop();
 }

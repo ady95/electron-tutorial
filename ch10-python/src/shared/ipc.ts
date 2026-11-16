@@ -1,13 +1,17 @@
 // Main과 Renderer가 함께 쓰는 IPC 채널 이름과 타입
 
+// 2단계부터 Python 상태·진행률·결과·취소는 IPC가 아니라 Python 관리자와 직접 연결된
+// MessagePort로 주고받는다(src/shared/host.ts). Main을 거치는 것은 대화상자와 경로뿐이다
 export const IPC = {
-  pythonStatus: 'python:status',
+  pythonPort: 'python:port', // Main → 화면: 관리자와 연결된 MessagePort 전달
   selectInput: 'report:select-input',
-  runReport: 'report:run',
-  cancelReport: 'report:cancel',
-  reportProgress: 'report:progress',
+  startReport: 'report:start',
   openReport: 'report:open',
 } as const;
+
+export type StartResult =
+  | { ok: true }
+  | { ok: false; code: string; message: string };
 
 export type PythonStatus =
   | {

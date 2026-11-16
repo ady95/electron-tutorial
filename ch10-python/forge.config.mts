@@ -34,6 +34,12 @@ const config: ForgeConfig = {
           config: 'vite.preload.config.mts',
           target: 'preload',
         },
+        {
+          // Python 관리자 (UtilityProcess). Main과 같은 Node 환경이므로 Main 설정으로 빌드한다
+          entry: 'src/python-host.ts',
+          config: 'vite.main.config.mts',
+          target: 'main',
+        },
       ],
       renderer: [
         {
