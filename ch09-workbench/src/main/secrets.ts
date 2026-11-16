@@ -8,6 +8,7 @@ const file = () => path.join(app.getPath('userData'), 'secrets.json');
 
 interface SecretFile {
   apiKey?: string; // 암호문을 base64로 저장
+  origin?: string; // 이 키를 보낼 서버 (예: https://api.openai.com). 비밀이 아니므로 평문
 }
 
 async function readFile(): Promise<SecretFile> {
@@ -24,7 +25,8 @@ async function writeFile(data: SecretFile) {
   await fs.rename(tmp, file());
 }
 
-export async function saveApiKey(value: string) {
+// 키는 저장할 때의 서버 주소(origin)와 함께 저장한다. 다른 서버로는 보내지 않기 위해서다
+export async function saveApiKey(value: string, origin: string) {
   if (!(await safeStorage.isAsyncEncryptionAvailable())) {
     return {
       ok: false,
@@ -35,35 +37,45 @@ export async function saveApiKey(value: string) {
   await writeFile({
     ...(await readFile()),
     apiKey: encrypted.toString('base64'),
+    origin,
   });
   return { ok: true };
 }
 
-// Main 안에서만 쓴다 (9장에서 LLM API를 호출할 때). Renderer로는 보내지 않는다
-export async function loadApiKey(): Promise<string | null> {
-  const { apiKey } = await readFile();
+// Main 안에서만 쓴다. Renderer로는 보내지 않는다
+export async function loadApiKey(): Promise<{
+  key: string;
+  origin: string;
+} | null> {
+  const { apiKey, origin = '' } = await readFile();
   if (!apiKey) return null;
   const { result, shouldReEncrypt } = await safeStorage.decryptStringAsync(
     Buffer.from(apiKey, 'base64'),
   );
   // OS가 암호화 키를 바꾼 경우 새 키로 다시 암호화해 둔다
-  if (shouldReEncrypt) await saveApiKey(result);
-  return result;
+  if (shouldReEncrypt) await saveApiKey(result, origin);
+  return { key: result, origin };
 }
 
 export async function getStatus(): Promise<SecretStatus> {
   const available = await safeStorage.isAsyncEncryptionAvailable();
-  let key: string | null = null;
+  let saved: { key: string; origin: string } | null = null;
   try {
-    key = await loadApiKey();
+    saved = await loadApiKey();
   } catch {
-    key = null; // 다른 PC에서 복사해 온 파일 등은 복호화할 수 없다
+    saved = null; // 다른 PC에서 복사해 온 파일 등은 복호화할 수 없다
   }
-  return { available, saved: key !== null, last4: key ? key.slice(-4) : null };
+  return {
+    available,
+    saved: saved !== null,
+    last4: saved ? saved.key.slice(-4) : null,
+    origin: saved?.origin ?? null,
+  };
 }
 
 export async function clearApiKey() {
   const data = await readFile();
   delete data.apiKey;
+  delete data.origin;
   await writeFile(data);
 }

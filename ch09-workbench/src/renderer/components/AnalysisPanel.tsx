@@ -133,7 +133,20 @@ export default function AnalysisPanel({
           질문
         </button>
       </div>
-      {running && <p className="status">{LABEL[running]} 생성 중...</p>}
+      {running && (
+        <div className="controls">
+          <span className="status">{LABEL[running]} 생성 중...</span>
+          <button onClick={() => window.api.cancelAnalysis(currentId.current)}>
+            취소
+          </button>
+        </div>
+      )}
+      {doc && doc.suspicious.length > 0 && (
+        <p className="warn-box">
+          주의: 이 문서에는 AI에게 내리는 지시처럼 보이는 문장이 있습니다.
+          결과가 원문과 다른지 확인하세요.
+        </p>
+      )}
       {shown && <p className="shown-title">{titleOf(shown)}</p>}
       {/* LLM 응답도 텍스트로만 표시한다 (HTML로 해석하지 않는다) */}
       {output && <pre className="output">{output}</pre>}

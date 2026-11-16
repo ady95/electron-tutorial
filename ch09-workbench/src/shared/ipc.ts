@@ -9,6 +9,7 @@ export const IPC = {
   getLlmSettings: 'llm:get-settings',
   saveLlmSettings: 'llm:save-settings',
   analyze: 'llm:analyze',
+  cancelAnalysis: 'llm:cancel',
   listAnalyses: 'analyses:list',
   search: 'search:query',
   llmDelta: 'llm:delta',
@@ -34,6 +35,7 @@ export interface DocSummary {
 
 export interface DocDetail extends DocSummary {
   text: string;
+  suspicious: string[]; // AI에게 내리는 지시처럼 보이는 줄 (프롬프트 주입 의심)
 }
 
 // 드래그 앤 드롭으로 받은 파일. 경로 대신 이름과 내용을 보낸다
@@ -112,6 +114,7 @@ export interface SecretStatus {
   available: boolean; // OS 암호화 사용 가능 여부
   saved: boolean;
   last4: string | null; // 저장된 키의 마지막 4자리 (확인용)
+  origin: string | null; // 키를 보낼 서버 (저장할 때의 서버 주소)
 }
 
 export interface ExposedApi {
@@ -123,6 +126,7 @@ export interface ExposedApi {
   getLlmSettings: () => Promise<LlmSettingsView>;
   saveLlmSettings: (settings: LlmSettings) => Promise<boolean>;
   analyze: (request: AnalyzeRequest) => Promise<AnalyzeResult>;
+  cancelAnalysis: (requestId: number) => void;
   onLlmDelta: (callback: (d: LlmDelta) => void) => () => void;
   listAnalyses: (docId: number) => Promise<AnalysisRecord[]>;
   search: (query: string) => Promise<SearchHit[]>;

@@ -78,7 +78,7 @@ export default function SettingsPanel() {
         {!status
           ? '확인 중...'
           : status.saved
-            ? `저장됨 (끝자리 ...${status.last4})`
+            ? `저장됨 (끝자리 ...${status.last4}, ${status.origin} 전용)`
             : view?.fromEnv.apiKey
               ? '저장된 키 없음 (환경 변수 OPENAI_API_KEY 사용)'
               : '저장된 키 없음'}

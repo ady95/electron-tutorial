@@ -11,6 +11,8 @@ const api: ExposedApi = {
   saveLlmSettings: (settings) =>
     ipcRenderer.invoke(IPC.saveLlmSettings, settings),
   analyze: (request) => ipcRenderer.invoke(IPC.analyze, request),
+  cancelAnalysis: (requestId) =>
+    ipcRenderer.send(IPC.cancelAnalysis, requestId),
   onLlmDelta: (callback) => {
     // 이벤트 객체는 넘기지 않고 데이터만 넘긴다
     const listener = (_e: IpcRendererEvent, d: LlmDelta) => callback(d);

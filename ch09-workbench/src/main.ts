@@ -10,8 +10,12 @@ import {
 } from './main/settings';
 import {
   analyze,
+  cancelAnalysis,
+  currentBaseUrl,
   getLlmSettingsView,
+  originOf,
   parseAnalyzeRequest,
+  setTimeoutForDev,
 } from './main/analysis';
 import { importDropped, openWithDialog, parseDropped } from './main/documents';
 import {
@@ -47,6 +51,8 @@ if (!app.isPackaged) {
   } catch {
     // .env가 없으면 그냥 넘어간다
   }
+  // 시간 초과 테스트용 (개발 중에만)
+  setTimeoutForDev(Number(process.env.WORKBENCH_LLM_TIMEOUT_MS ?? 0));
 }
 
 const createWindow = () => {
@@ -132,6 +138,10 @@ handle(IPC.analyze, (event, value: unknown) => {
   return analyze(event.sender, req);
 });
 
+on(IPC.cancelAnalysis, (event, requestId: unknown) => {
+  cancelAnalysis(event.sender, requestId);
+});
+
 // --- API 키 (6장) ---
 handle(IPC.secretStatus, () => getStatus());
 
@@ -139,7 +149,10 @@ handle(IPC.saveSecret, (_event, value: unknown) => {
   if (typeof value !== 'string' || value.trim() === '' || value.length > 500) {
     return { ok: false, message: '키 형식이 올바르지 않습니다.' };
   }
-  return saveApiKey(value.trim());
+  // 키는 지금 설정된 서버에만 보내도록 서버 주소와 함께 저장한다
+  const origin = originOf(currentBaseUrl());
+  if (!origin) return { ok: false, message: '서버 주소를 먼저 저장하세요.' };
+  return saveApiKey(value.trim(), origin);
 });
 
 handle(IPC.clearSecret, () => clearApiKey());

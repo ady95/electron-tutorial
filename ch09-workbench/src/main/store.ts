@@ -11,6 +11,7 @@ import type {
   SearchHit,
 } from '../shared/ipc';
 import type { AnalysisKind } from '../shared/prompts';
+import { findSuspiciousLines } from '../shared/injection';
 import { makeSnippet } from '../shared/snippet';
 
 let db: DatabaseSync | null = null;
@@ -137,7 +138,7 @@ export function findByHash(hash: string): DocSummary | null {
 }
 
 export function addDocument(
-  doc: Omit<DocDetail, 'id' | 'addedAt'>,
+  doc: Omit<DocDetail, 'id' | 'addedAt' | 'suspicious'>,
   hash: string,
 ): DocSummary {
   const addedAt = new Date().toISOString();
@@ -163,7 +164,9 @@ export function addDocument(
     ).run(lastInsertRowid, lastInsertRowid, doc.name, doc.text);
     return Number(lastInsertRowid);
   });
-  return { ...doc, id, addedAt };
+  // 목록용 요약만 돌려준다 (본문은 문서를 고를 때 따로 가져간다)
+  const { text: _text, ...summary } = doc;
+  return { ...summary, id, addedAt };
 }
 
 export function listDocuments(): DocSummary[] {
@@ -177,7 +180,9 @@ export function getDocument(id: number): DocDetail | null {
   const row = conn()
     .prepare(`SELECT ${SUMMARY_COLUMNS}, text FROM documents WHERE id = ?`)
     .get(id) as DocRow | undefined;
-  return row ? { ...toSummary(row), text: row.text ?? '' } : null;
+  if (!row) return null;
+  const text = row.text ?? '';
+  return { ...toSummary(row), text, suspicious: findSuspiciousLines(text) };
 }
 
 export function removeDocument(id: number): boolean {
