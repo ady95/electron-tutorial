@@ -30,6 +30,12 @@ const config: ForgeConfig = {
           target: 'main',
         },
         {
+          // 11-4: Local AI Handler (UtilityProcess). Main과 같은 Node 환경이므로 Main 설정으로 빌드한다
+          entry: 'src/ai-handler.ts',
+          config: 'vite.main.config.mts',
+          target: 'main',
+        },
+        {
           entry: 'src/preload.ts',
           config: 'vite.preload.config.mts',
           target: 'preload',

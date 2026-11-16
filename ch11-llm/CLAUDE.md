@@ -16,6 +16,7 @@
 - `src/main/providers.ts` — 요청 경로 결정 (서버 주소·모델·키)
 - `src/main/secrets.ts` — safeStorage 키 저장
 - `proxy/server.mjs` — 회사 중계 서버 예제 (앱과 별도로 실행)
+- `src/ai-handler.ts` + `src/main/local-ai.ts` — Local AI Handler (실험 기능, UtilityProcess)
 - `src/preload.ts` — 요청마다 MessageChannel. 포트는 화면에 넘기지 않는다
 - `src/renderer/` — 화면. `markdown.ts`만 HTML을 만든다
 - `src/shared/` — 공용 타입과 순수 함수 (테스트 대상)
@@ -29,6 +30,13 @@
 - 앱 코드·빌드 결과물에 API 키를 넣지 않는다 (`VITE_` 환경 변수 포함). 빌드 결과는 누구나 열어 볼 수 있다
 - 로컬 모델은 컨텍스트를 넘기면 앞부분을 조용히 버린다. 보내기 전에 `estimateTokens()`로 어림해 `fitHistory()`로 맞춘다
 - 요청 하나는 포트 하나다. 포트가 닫히면(창 닫힘·새로고침) 요청을 끊는다
+
+## Local AI Handler 규칙 (실험 기능)
+
+- 핸들러는 `securityOrigin`이 앱 화면의 출처일 때만 클래스를 돌려준다. 같은 세션의 다른 출처 페이지도 요청할 수 있다
+- 핸들러 함수는 창·출처마다 한 번만 불린다. 설정은 복사해 두지 말고 쓸 때마다 읽는다
+- UtilityProcess 쪽은 `process.parentPort`로 통신한다. `electron/utility`는 빌드에서 외부 모듈로 둔다 (`vite.main.config.mts`)
+- Electron 버전을 올리면 이 기능부터 다시 확인한다 (API가 바뀌거나 사라질 수 있다)
 
 ## 보안 규칙
 

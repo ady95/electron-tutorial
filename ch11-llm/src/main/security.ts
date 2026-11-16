@@ -17,6 +17,13 @@ export function setAppUrl(url: string) {
   appUrl = new URL(url);
 }
 
+// 앱 화면의 출처. Local AI Handler가 받는 securityOrigin과 같은 형식으로 돌려준다 (11-4)
+// file:// 페이지는 URL 객체의 origin이 'null'이지만 핸들러에는 'file://'로 온다
+export function appOrigin() {
+  if (!appUrl) return '';
+  return appUrl.protocol === 'file:' ? 'file://' : appUrl.origin;
+}
+
 export function rendererFileUrl(indexHtml: string) {
   return pathToFileURL(indexHtml).href;
 }

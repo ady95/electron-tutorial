@@ -9,6 +9,7 @@ import {
   saveSettings,
 } from './main/settings';
 import { setTimeoutForDev, startChat } from './main/chat';
+import { startLocalAi, updateLocalAi } from './main/local-ai';
 import { listChatModels } from './main/ollama';
 import { currentBaseUrl, defaultsView, originOf } from './main/providers';
 import { clearKey, keyStatus, saveKey } from './main/secrets';
@@ -78,6 +79,7 @@ handle(IPC.saveSettings, (_event, value: unknown) => {
   const llm = parseLlmSettings(value);
   if (!llm) return false;
   saveSettings({ llm });
+  updateLocalAi(); // 11-4: 핸들러도 새 모델·컨텍스트를 쓰게 한다
   return true;
 });
 
@@ -124,6 +126,7 @@ on(IPC.startChat, (event, request: unknown) => {
 app.whenReady().then(() => {
   loadSettings();
   createWindow();
+  startLocalAi(); // 11-4: 앱 화면의 출처가 정해진 뒤(createWindow 뒤)에 시작한다
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });

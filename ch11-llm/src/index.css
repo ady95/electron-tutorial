@@ -163,3 +163,15 @@ body {
   width: auto;
   margin: 0;
 }
+
+.prompt-api textarea {
+  width: 100%;
+  font: inherit;
+}
+
+.api-output {
+  white-space: pre-wrap;
+  background: #f6f6f6;
+  padding: 8px;
+  min-height: 60px;
+}

@@ -27,6 +27,7 @@
 | `ch08-ai-feature` | 8장 | 7장 앱 + Claude Code와 함께 추가한 작업 이력 CSV 내보내기, 프로젝트 규칙(`CLAUDE.md`)·권한 설정(`.claude/settings.json`), `npm test` |
 | `ch09-workbench` | 9장 | AI 문서 분석 워크벤치: PDF·텍스트 불러오기, LLM 요약·핵심어·질문(스트리밍), SQLite 저장·검색, 오류 처리·취소 (태그 `ch09-step1`~`ch09-step5`, `ch09`) |
 | `ch10-python` | 10장 | 매출 보고서 도우미: 기존 Python(pandas) 스크립트를 표준 입출력(JSON Lines) 작업자로 연결, UtilityProcess·MessagePort 분리, FastAPI 방식 비교, PyInstaller 패키징 (태그 `ch10-step1`~`ch10-step5`, `ch10`) |
+| `ch11-llm` | 11장 | AI 채팅: 원격 LLM 스트리밍(요청별 MessagePort, 마크다운 정화, 재시도), 요청 경로(내 API 키 / 회사 중계 서버 예제), 내 PC의 Ollama(컨텍스트·추론), 실험 기능 Local AI Handler (태그 `ch11-step1`~`ch11-step4`, `ch11`) |
 
 장이 진행되면서 폴더가 추가됩니다. 단계별 결과는 Git 태그(예: `ch02`)로도 받을 수 있습니다.
 

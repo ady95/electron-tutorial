@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import MessageView from './components/MessageView';
+import PromptApiPanel from './components/PromptApiPanel';
 import SettingsPanel from './components/SettingsPanel';
 import { PROVIDER_LABELS } from './labels';
 import { useChat } from './useChat';
 import { PROVIDER_IDS, type ProviderId } from '../shared/ipc';
 
 export default function App() {
-  const [showSettings, setShowSettings] = useState(false);
+  // 가운데 영역: 대화 / 설정 / Prompt API 실험(11-4)
+  const [view, setView] = useState<'chat' | 'settings' | 'prompt-api'>('chat');
   const [input, setInput] = useState('');
   const [provider, setProvider] = useState<ProviderId>('openai');
   const { messages, busy, send, stop, reset } = useChat(provider);
@@ -54,14 +56,26 @@ export default function App() {
         <button onClick={reset} disabled={busy || messages.length === 0}>
           새 대화
         </button>
-        <button onClick={() => setShowSettings((v) => !v)}>설정</button>
+        <button
+          onClick={() =>
+            setView((v) => (v === 'settings' ? 'chat' : 'settings'))
+          }
+        >
+          설정
+        </button>
+        <button
+          onClick={() =>
+            setView((v) => (v === 'prompt-api' ? 'chat' : 'prompt-api'))
+          }
+        >
+          Prompt API
+        </button>
       </header>
 
-      {showSettings ? (
-        <SettingsPanel
-          provider={provider}
-          onClose={() => setShowSettings(false)}
-        />
+      {view === 'settings' ? (
+        <SettingsPanel provider={provider} onClose={() => setView('chat')} />
+      ) : view === 'prompt-api' ? (
+        <PromptApiPanel />
       ) : (
         <main className="messages">
           {messages.length === 0 && (
