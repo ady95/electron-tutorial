@@ -19,16 +19,21 @@ const appDir = path.resolve(__dirname, '..', '..');
 
 type Mock = Awaited<ReturnType<typeof startMockLlm>>;
 
-// 앱 실행 방법
-//  - 기본: 프로덕션 빌드(.vite)를 electron . 으로 실행한다. 먼저 npm run package로 빌드한다
-//  - APP_EXE 환경 변수: 패키지된 실행 파일을 직접 실행한다
+// 프로덕션 빌드(.vite)를 electron . 으로 실행한다. 먼저 npm run package로 빌드한다.
+// 패키지된 실행 파일은 Fuse(EnableNodeCliInspectArguments 끔) 때문에 Playwright가 붙지 못한다.
+// 패키지는 tests/smoke-packaged.mjs로 "실행되어 창이 뜨는지"만 따로 확인한다 (12-3 실측)
 export async function launchApp(userData: string, env: Record<string, string>) {
-  const packaged = process.env.APP_EXE;
   const clean = { ...process.env, ...env } as Record<string, string>;
   delete clean.ELECTRON_RUN_AS_NODE; // 이 값이 있으면 Electron이 Node로 실행된다
   return electron.launch({
-    executablePath: packaged ?? (require('electron') as string),
-    args: [...(packaged ? [] : ['.']), `--user-data-dir=${userData}`],
+    executablePath: require('electron') as string,
+    args: [
+      '.',
+      `--user-data-dir=${userData}`,
+      // macOS: SSH 접속·CI처럼 로그인 화면이 없는 세션에서는 키체인을 쓸 수 없어 safeStorage가 실패한다.
+      // 테스트에서는 Chromium의 가짜 키체인을 쓴다 (12-3 실측)
+      ...(process.platform === 'darwin' ? ['--use-mock-keychain'] : []),
+    ],
     cwd: appDir,
     env: clean,
   });

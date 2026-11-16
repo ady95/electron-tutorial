@@ -76,6 +76,7 @@ npm test                # Vitest (시스템 Node.js)
 npm run test:electron   # 같은 테스트를 Electron에 들어 있는 Node.js로
 npm run coverage        # 커버리지
 npm run e2e             # 프로덕션 빌드 후 GUI 테스트 (Playwright)
+npm run smoke:packaged -- "out/AI 채팅-win32-x64/AI 채팅.exe"   # 패키지 앱이 실행되어 창이 뜨는지
 npm run typecheck
 npm run lint
 npm run check:security

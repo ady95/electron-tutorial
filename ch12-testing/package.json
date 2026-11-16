@@ -25,7 +25,8 @@
     "test:electron": "node scripts/test-electron.mjs",
     "coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
-    "e2e": "npm run package && playwright test"
+    "e2e": "npm run package && playwright test",
+    "smoke:packaged": "node tests/smoke-packaged.mjs"
   },
   "devDependencies": {
     "@electron-forge/cli": "^8.0.1",

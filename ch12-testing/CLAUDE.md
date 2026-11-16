@@ -49,6 +49,7 @@
 - 단위 테스트는 Vitest. `src/**/*.test.ts`에 둔다. electron을 불러오는 모듈은 `vi.mock`으로 바꿔 Electron 없이 실행한다
 - 시간을 기다리는 코드는 전역 `setTimeout`을 쓴다. `node:timers/promises`는 가짜 타이머가 바꾸지 못한다
 - GUI 테스트는 `tests/e2e/`, Playwright. 프로덕션 빌드(`npm run package`)를 띄우고 가짜 LLM 서버(`tests/mock-llm.mjs`)를 쓴다. 실제 LLM에 요청하지 않는다
+- 패키지 앱은 Fuse 때문에 Playwright가 붙지 못한다. `tests/smoke-packaged.mjs`로 실행 여부만 확인한다
 - 테스트용 파일에서 `import.meta`와 최상위 `await`를 쓰지 않는다 (Playwright가 CommonJS로 바꿔 실행한다)
 - 보안 규칙(송신자 검증, 키 전송 대상)을 고치면 해당 테스트를 먼저 고치고 통과시킨다
 
