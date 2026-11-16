@@ -6,7 +6,7 @@ import {
   type LlmSettingsView,
 } from '../shared/ipc';
 import { buildMessages, type AnalysisKind } from '../shared/prompts';
-import { getDocument } from './documents';
+import { addAnalysis, getDocument } from './store';
 import { streamChat, type LlmConfig } from './llm';
 import { loadApiKey } from './secrets';
 import { getSettings } from './settings';
@@ -81,13 +81,31 @@ export async function analyze(
         sender.send(IPC.llmDelta, { requestId: req.requestId, delta });
       }
     });
+    const elapsedMs = Date.now() - started;
+    // 결과를 저장한다. 저장에 실패해도 화면에는 결과를 보여 준다
+    let analysisId = 0;
+    try {
+      analysisId = addAnalysis({
+        docId: doc.id,
+        kind: req.kind,
+        question: req.question,
+        model: config.model,
+        result: text,
+        sentChars: prompt.sentChars,
+        clipped: prompt.clipped,
+        elapsedMs,
+      });
+    } catch (err) {
+      console.error('분석 결과 저장 실패', err);
+    }
     return {
       ok: true,
+      analysisId,
       text,
       model: config.model,
       sentChars: prompt.sentChars,
       clipped: prompt.clipped,
-      elapsedMs: Date.now() - started,
+      elapsedMs,
     };
   } catch (err) {
     console.error('LLM 호출 실패', err);

@@ -1,22 +1,13 @@
 import { dialog, type BrowserWindow } from 'electron';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import type {
-  DocDetail,
-  DocKind,
-  DocSummary,
-  DroppedFile,
-  ImportResult,
-} from '../shared/ipc';
+import type { DocKind, DroppedFile, ImportResult } from '../shared/ipc';
 import { decodeText } from '../shared/text';
 import { extractPdfText } from './pdf';
+import { addDocument, findByHash, sha256 } from './store';
 
 export const MAX_FILE_BYTES = 20 * 1024 * 1024; // 20MB
 const TEXT_EXTS = ['.txt', '.md'];
-
-// 1단계에서는 메모리에만 둔다 (3단계에서 SQLite로 옮긴다)
-const docs = new Map<number, DocDetail>();
-let nextId = 1;
 
 function kindOf(name: string): DocKind | null {
   const ext = path.extname(name).toLowerCase();
@@ -58,28 +49,27 @@ async function extract(name: string, data: Uint8Array) {
   };
 }
 
-async function addOne(name: string, data: Uint8Array): Promise<DocSummary> {
+async function addOne(name: string, data: Uint8Array, result: ImportResult) {
+  // 같은 내용의 파일이 이미 있으면 다시 추출·저장하지 않는다 (이름이 달라도 같은 파일로 본다)
+  const hash = sha256(data);
+  const existing = findByHash(hash);
+  if (existing) {
+    result.duplicates.push(name);
+    return;
+  }
   const extracted = await extract(name, data);
-  const doc: DocDetail = {
-    id: nextId++,
-    name,
-    chars: extracted.text.length,
-    addedAt: new Date().toISOString(),
-    ...extracted,
-  };
-  docs.set(doc.id, doc);
-  return summary(doc);
+  result.added.push(
+    addDocument({ name, chars: extracted.text.length, ...extracted }, hash),
+  );
 }
-
-const summary = ({ text: _text, ...rest }: DocDetail): DocSummary => rest;
 
 async function importAll(
   files: { name: string; load: () => Promise<Uint8Array> }[],
 ): Promise<ImportResult> {
-  const result: ImportResult = { added: [], errors: [] };
+  const result: ImportResult = { added: [], duplicates: [], errors: [] };
   for (const f of files) {
     try {
-      result.added.push(await addOne(f.name, await f.load()));
+      await addOne(f.name, await f.load(), result);
     } catch (err) {
       result.errors.push({ name: f.name, message: (err as Error).message });
     }
@@ -95,7 +85,7 @@ export async function openWithDialog(
     properties: ['openFile', 'multiSelections'],
     filters: [{ name: '문서', extensions: ['pdf', 'txt', 'md'] }],
   });
-  if (canceled) return { added: [], errors: [] };
+  if (canceled) return { added: [], duplicates: [], errors: [] };
   return importAll(
     filePaths.map((p) => ({
       name: path.basename(p),
@@ -134,16 +124,4 @@ export function importDropped(files: DroppedFile[]): Promise<ImportResult> {
   return importAll(
     files.map((f) => ({ name: f.name, load: async () => f.data })),
   );
-}
-
-export function listDocuments(): DocSummary[] {
-  return [...docs.values()].reverse().map(summary);
-}
-
-export function getDocument(id: number): DocDetail | null {
-  return docs.get(id) ?? null;
-}
-
-export function removeDocument(id: number): boolean {
-  return docs.delete(id);
 }

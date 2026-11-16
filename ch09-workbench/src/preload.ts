@@ -17,6 +17,8 @@ const api: ExposedApi = {
     ipcRenderer.on(IPC.llmDelta, listener);
     return () => ipcRenderer.removeListener(IPC.llmDelta, listener);
   },
+  listAnalyses: (docId) => ipcRenderer.invoke(IPC.listAnalyses, docId),
+  search: (query) => ipcRenderer.invoke(IPC.search, query),
   secretStatus: () => ipcRenderer.invoke(IPC.secretStatus),
   saveSecret: (value) => ipcRenderer.invoke(IPC.saveSecret, value),
   clearSecret: () => ipcRenderer.invoke(IPC.clearSecret),

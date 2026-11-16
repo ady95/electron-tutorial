@@ -13,14 +13,16 @@ import {
   getLlmSettingsView,
   parseAnalyzeRequest,
 } from './main/analysis';
+import { importDropped, openWithDialog, parseDropped } from './main/documents';
 import {
+  closeStore,
   getDocument,
-  importDropped,
+  listAnalyses,
   listDocuments,
-  openWithDialog,
-  parseDropped,
+  openStore,
   removeDocument,
-} from './main/documents';
+  search,
+} from './main/store';
 import { clearApiKey, getStatus, saveApiKey } from './main/secrets';
 import {
   applySecurity,
@@ -80,13 +82,18 @@ const isId = (v: unknown): v is number =>
 // --- 문서 ---
 handle(IPC.openDocuments, (event) => {
   const win = BrowserWindow.fromWebContents(event.sender);
-  return win ? openWithDialog(win) : { added: [], errors: [] };
+  return win ? openWithDialog(win) : { added: [], duplicates: [], errors: [] };
 });
 
 handle(IPC.importDocuments, (_event, value: unknown) => {
   const files = parseDropped(value);
-  if (!files)
-    return { added: [], errors: [{ name: '', message: '잘못된 요청' }] };
+  if (!files) {
+    return {
+      added: [],
+      duplicates: [],
+      errors: [{ name: '', message: '잘못된 요청' }],
+    };
+  }
   return importDropped(files);
 });
 
@@ -99,6 +106,15 @@ handle(IPC.getDocument, (_event, id: unknown) =>
 handle(IPC.removeDocument, (_event, id: unknown) =>
   isId(id) ? removeDocument(id) : false,
 );
+
+handle(IPC.listAnalyses, (_event, docId: unknown) =>
+  isId(docId) ? listAnalyses(docId) : [],
+);
+
+handle(IPC.search, (_event, query: unknown) => {
+  if (typeof query !== 'string' || query.length > 100) return [];
+  return search(query);
+});
 
 // --- LLM ---
 handle(IPC.getLlmSettings, () => getLlmSettingsView());
@@ -134,6 +150,7 @@ on(IPC.openDataFolder, () => {
 
 app.whenReady().then(() => {
   loadSettings();
+  openStore();
   createWindow();
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
@@ -143,3 +160,5 @@ app.whenReady().then(() => {
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });
+
+app.on('will-quit', () => closeStore());

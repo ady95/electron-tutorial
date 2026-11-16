@@ -1,9 +1,15 @@
 import { useEffect, useState } from 'react';
-import type { DocDetail, DocSummary, ImportResult } from '../shared/ipc';
+import type {
+  DocDetail,
+  DocSummary,
+  ImportResult,
+  SearchHit,
+} from '../shared/ipc';
 import DocList from './components/DocList';
 import DocPreview from './components/DocPreview';
 import AnalysisPanel from './components/AnalysisPanel';
 import SettingsPanel from './components/SettingsPanel';
+import SearchResults from './components/SearchResults';
 
 export default function App() {
   const [docs, setDocs] = useState<DocSummary[]>([]);
@@ -13,11 +19,22 @@ export default function App() {
   const [busy, setBusy] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [query, setQuery] = useState('');
+  const [hits, setHits] = useState<SearchHit[]>([]);
+  const [focusAnalysisId, setFocusAnalysisId] = useState<number | null>(null);
 
   const reload = () => window.api.listDocuments().then(setDocs);
   useEffect(() => {
     reload();
   }, []);
+
+  // 입력이 멈추고 0.3초 뒤에 검색한다
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      window.api.search(query).then(setHits);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [query]);
 
   useEffect(() => {
     if (selectedId === null) return setSelected(null);
@@ -29,6 +46,9 @@ export default function App() {
     await reload();
     const parts: string[] = [];
     if (r.added.length) parts.push(`${r.added.length}개 문서를 불러왔습니다.`);
+    if (r.duplicates.length) {
+      parts.push(`이미 있는 문서: ${r.duplicates.join(', ')}`);
+    }
     for (const e of r.errors) parts.push(`${e.name}: ${e.message}`);
     setNotice(parts.join(' '));
     if (r.added.length) setSelectedId(r.added[r.added.length - 1].id);
@@ -59,6 +79,11 @@ export default function App() {
         ),
       ),
     );
+  };
+
+  const openHit = (hit: SearchHit) => {
+    setSelectedId(hit.docId);
+    setFocusAnalysisId(hit.source === 'analysis' ? hit.refId : null);
   };
 
   const remove = async (id: number) => {
@@ -94,14 +119,36 @@ export default function App() {
         <SettingsPanel />
       ) : (
         <main className="workspace">
-          <DocList
-            docs={docs}
-            selectedId={selectedId}
-            onSelect={setSelectedId}
-            onRemove={remove}
-          />
+          <aside className="sidebar">
+            <input
+              className="search"
+              placeholder="문서·분석 결과 검색"
+              value={query}
+              maxLength={100}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+            {query.trim() ? (
+              <SearchResults hits={hits} onOpen={openHit} />
+            ) : (
+              <DocList
+                docs={docs}
+                selectedId={selectedId}
+                onSelect={(id) => {
+                  setSelectedId(id);
+                  setFocusAnalysisId(null);
+                }}
+                onRemove={remove}
+              />
+            )}
+          </aside>
           <DocPreview doc={selected} />
-          <AnalysisPanel doc={selected} />
+          <AnalysisPanel
+            doc={selected}
+            focusAnalysisId={focusAnalysisId}
+            onSaved={() =>
+              query.trim() && window.api.search(query).then(setHits)
+            }
+          />
         </main>
       )}
     </div>

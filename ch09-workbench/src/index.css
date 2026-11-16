@@ -204,3 +204,62 @@ body {
 .settings input.wide {
   width: 420px;
 }
+
+.sidebar {
+  width: 280px;
+  border-right: 1px solid #ddd;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.sidebar input.search {
+  margin: 8px 8px 0;
+  padding: 4px 6px;
+}
+
+.sidebar .doc-list {
+  width: auto;
+  border-right: none;
+  flex: 1;
+}
+
+.badge {
+  font-size: 11px;
+  padding: 0 4px;
+  border-radius: 3px;
+  background: #e3e6ea;
+}
+
+.badge.analysis {
+  background: #e6f4ea;
+}
+
+.snippet {
+  color: #555;
+  font-size: 12px;
+}
+
+.shown-title {
+  font-weight: 600;
+  margin: 0;
+}
+
+.analysis ul.history {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.analysis ul.history li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.analysis ul.history li.selected {
+  background: #e8eefc;
+}

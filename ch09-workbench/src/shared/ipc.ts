@@ -9,6 +9,8 @@ export const IPC = {
   getLlmSettings: 'llm:get-settings',
   saveLlmSettings: 'llm:save-settings',
   analyze: 'llm:analyze',
+  listAnalyses: 'analyses:list',
+  search: 'search:query',
   llmDelta: 'llm:delta',
   secretStatus: 'secret:status',
   saveSecret: 'secret:save',
@@ -42,6 +44,7 @@ export interface DroppedFile {
 
 export interface ImportResult {
   added: DocSummary[];
+  duplicates: string[]; // 이미 있는 문서라 다시 저장하지 않은 파일 이름
   errors: { name: string; message: string }[];
 }
 
@@ -67,6 +70,7 @@ export interface AnalyzeRequest {
 export type AnalyzeResult =
   | {
       ok: true;
+      analysisId: number;
       text: string;
       model: string;
       sentChars: number;
@@ -74,6 +78,30 @@ export type AnalyzeResult =
       elapsedMs: number;
     }
   | { ok: false; message: string };
+
+// 저장된 분석 결과
+export interface AnalysisRecord {
+  id: number;
+  docId: number;
+  kind: AnalysisKind;
+  question: string;
+  model: string;
+  result: string;
+  sentChars: number;
+  clipped: boolean;
+  elapsedMs: number;
+  createdAt: string;
+}
+
+// 검색 결과 한 줄. 문서 자체(이름·본문)에서 찾았는지, 분석 결과에서 찾았는지 구분한다
+export interface SearchHit {
+  source: 'doc' | 'analysis';
+  refId: number; // 문서 id 또는 분석 id
+  docId: number;
+  docName: string;
+  title: string;
+  snippet: string;
+}
 
 export interface LlmDelta {
   requestId: number;
@@ -96,6 +124,8 @@ export interface ExposedApi {
   saveLlmSettings: (settings: LlmSettings) => Promise<boolean>;
   analyze: (request: AnalyzeRequest) => Promise<AnalyzeResult>;
   onLlmDelta: (callback: (d: LlmDelta) => void) => () => void;
+  listAnalyses: (docId: number) => Promise<AnalysisRecord[]>;
+  search: (query: string) => Promise<SearchHit[]>;
   secretStatus: () => Promise<SecretStatus>;
   saveSecret: (value: string) => Promise<{ ok: boolean; message?: string }>;
   clearSecret: () => Promise<void>;

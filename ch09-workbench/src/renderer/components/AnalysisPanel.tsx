@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { AnalyzeResult, DocDetail } from '../../shared/ipc';
+import type { AnalysisRecord, DocDetail } from '../../shared/ipc';
 import type { AnalysisKind } from '../../shared/prompts';
 
 const LABEL: Record<AnalysisKind, string> = {
@@ -8,13 +8,31 @@ const LABEL: Record<AnalysisKind, string> = {
   qa: '질문',
 };
 
+const titleOf = (a: AnalysisRecord) =>
+  a.question ? `${LABEL[a.kind]}: ${a.question}` : LABEL[a.kind];
+
+const metaOf = (a: AnalysisRecord) =>
+  `${a.model} · 문서 ${a.sentChars.toLocaleString()}자 전송${a.clipped ? ' (앞부분만)' : ''} · ${(a.elapsedMs / 1000).toFixed(1)}초`;
+
 let lastRequestId = 0;
 
-export default function AnalysisPanel({ doc }: { doc: DocDetail | null }) {
+interface Props {
+  doc: DocDetail | null;
+  focusAnalysisId: number | null; // 검색 결과에서 고른 분석
+  onSaved: () => void;
+}
+
+export default function AnalysisPanel({
+  doc,
+  focusAnalysisId,
+  onSaved,
+}: Props) {
   const [question, setQuestion] = useState('');
   const [output, setOutput] = useState('');
   const [running, setRunning] = useState<AnalysisKind | null>(null);
-  const [result, setResult] = useState<AnalyzeResult | null>(null);
+  const [error, setError] = useState('');
+  const [history, setHistory] = useState<AnalysisRecord[]>([]);
+  const [shownId, setShownId] = useState<number | null>(null);
   const currentId = useRef(0);
 
   // 스트리밍 조각을 받아 화면에 이어 붙인다. 지금 요청의 조각만 받는다
@@ -26,11 +44,27 @@ export default function AnalysisPanel({ doc }: { doc: DocDetail | null }) {
     [],
   );
 
-  // 다른 문서를 고르면 결과를 비운다
+  const loadHistory = async (docId: number) => {
+    const list = await window.api.listAnalyses(docId);
+    setHistory(list);
+    return list;
+  };
+
+  // 문서가 바뀌면 저장된 분석을 불러온다. 검색에서 고른 분석이 있으면 그것을 보여 준다
   useEffect(() => {
     setOutput('');
-    setResult(null);
-  }, [doc?.id]);
+    setError('');
+    setShownId(null);
+    setHistory([]);
+    if (!doc) return;
+    loadHistory(doc.id).then((list) => {
+      const focus = list.find((a) => a.id === focusAnalysisId);
+      if (focus) {
+        setShownId(focus.id);
+        setOutput(focus.result);
+      }
+    });
+  }, [doc?.id, focusAnalysisId]);
 
   const run = async (kind: AnalysisKind) => {
     if (!doc) return;
@@ -38,7 +72,8 @@ export default function AnalysisPanel({ doc }: { doc: DocDetail | null }) {
     currentId.current = requestId;
     setRunning(kind);
     setOutput('');
-    setResult(null);
+    setError('');
+    setShownId(null);
     try {
       const r = await window.api.analyze({
         requestId,
@@ -46,12 +81,27 @@ export default function AnalysisPanel({ doc }: { doc: DocDetail | null }) {
         kind,
         question,
       });
-      if (currentId.current === requestId) setResult(r);
+      if (currentId.current !== requestId) return;
+      if (r.ok) {
+        await loadHistory(doc.id);
+        setShownId(r.analysisId);
+        setOutput(r.text);
+        onSaved();
+      } else {
+        setError(r.message);
+      }
     } finally {
       setRunning(null);
     }
   };
 
+  const show = (a: AnalysisRecord) => {
+    setShownId(a.id);
+    setOutput(a.result);
+    setError('');
+  };
+
+  const shown = history.find((a) => a.id === shownId);
   const disabled = !doc || running !== null || doc.chars === 0;
 
   return (
@@ -73,7 +123,7 @@ export default function AnalysisPanel({ doc }: { doc: DocDetail | null }) {
           maxLength={500}
           onChange={(e) => setQuestion(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter' && question.trim()) run('qa');
+            if (e.key === 'Enter' && question.trim() && !disabled) run('qa');
           }}
         />
         <button
@@ -84,15 +134,30 @@ export default function AnalysisPanel({ doc }: { doc: DocDetail | null }) {
         </button>
       </div>
       {running && <p className="status">{LABEL[running]} 생성 중...</p>}
+      {shown && <p className="shown-title">{titleOf(shown)}</p>}
       {/* LLM 응답도 텍스트로만 표시한다 (HTML로 해석하지 않는다) */}
       {output && <pre className="output">{output}</pre>}
-      {result && !result.ok && <p className="error">{result.message}</p>}
-      {result?.ok && (
-        <p className="status">
-          {result.model} · 문서 {result.sentChars.toLocaleString()}자 전송
-          {result.clipped && ' (앞부분만)'} ·{' '}
-          {(result.elapsedMs / 1000).toFixed(1)}초
-        </p>
+      {error && <p className="error">{error}</p>}
+      {shown && <p className="status">{metaOf(shown)}</p>}
+
+      {history.length > 0 && (
+        <>
+          <h3>저장된 분석 {history.length}건</h3>
+          <ul className="history">
+            {history.map((a) => (
+              <li
+                key={a.id}
+                className={a.id === shownId ? 'selected' : ''}
+                onClick={() => show(a)}
+              >
+                <span>{titleOf(a)}</span>
+                <span className="status">
+                  {new Date(a.createdAt).toLocaleString('ko-KR')}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </>
       )}
     </section>
   );
