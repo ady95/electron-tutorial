@@ -22,6 +22,7 @@
 | `ch04-memo` | 4장 | React + TypeScript 메모장 UI |
 | `ch05-memo` | 5장 | 파일 열기·저장, 메뉴·단축키, 드래그 앤 드롭 메모장 |
 | `ch05-batch` | 5장 | 파일 일괄 이름 바꾸기 도구 (미리보기, 진행률, 취소, 되돌리기) |
+| `ch06-history` | 6장 | 일괄 처리 도구 + 설정 저장, SQLite(`node:sqlite`) 작업 이력과 FTS5 검색, safeStorage API 키 보관 |
 
 장이 진행되면서 폴더가 추가됩니다. 단계별 결과는 Git 태그(예: `ch02`)로도 받을 수 있습니다.
 
