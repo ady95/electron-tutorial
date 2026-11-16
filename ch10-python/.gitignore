@@ -144,3 +144,6 @@ vite.config.ts.timestamp-*
 
 # Electron-Forge
 out/
+
+# PyInstaller로 만든 Python 작업자 (npm run build:python)
+python-dist/

@@ -18,11 +18,24 @@ import type {
 } from '../shared/host';
 import { IPC, type InputFolder, type StartResult } from '../shared/ipc';
 
+// 환경 변수로 바꾸는 설정(SALES_BACKEND, SALES_PYTHON)은 개발 중에만 따른다
 const transport = (): Transport =>
-  process.env.SALES_BACKEND === 'http' ? 'http' : 'stdio';
+  !app.isPackaged && process.env.SALES_BACKEND === 'http' ? 'http' : 'stdio';
 
-// 개발 중: python 폴더의 가상 환경(uv sync로 만든 .venv)의 python으로 worker.py를 실행한다
 export function pythonCommand(): PythonCommand {
+  if (app.isPackaged) {
+    // 배포본: PyInstaller로 만든 작업자. extraResource로 resources 폴더에 들어 있다
+    const dir = path.join(process.resourcesPath, 'sales-worker');
+    const exe =
+      process.platform === 'win32' ? 'sales-worker.exe' : 'sales-worker';
+    return {
+      command: path.join(dir, exe),
+      args: [],
+      cwd: dir,
+      notFoundHint: '앱을 다시 설치하세요.',
+    };
+  }
+  // 개발 중: python 폴더의 가상 환경(uv sync로 만든 .venv)의 python으로 worker.py를 실행한다
   const dir = path.join(app.getAppPath(), 'python');
   const venvPython =
     process.platform === 'win32'

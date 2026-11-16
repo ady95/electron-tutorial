@@ -6,12 +6,28 @@ import { MakerRpm } from '@electron-forge/maker-rpm';
 import { VitePlugin } from '@electron-forge/plugin-vite';
 import { FusesPlugin } from '@electron-forge/plugin-fuses';
 import { FuseV1Options, FuseVersion } from '@electron/fuses';
+import fs from 'node:fs';
+
+// PyInstaller로 만든 Python 작업자 (npm run build:python)
+const PYTHON_DIST = 'python-dist/sales-worker';
 
 const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
+    // asar 밖, 앱의 resources 폴더에 그대로 복사한다 (실행 파일은 asar 안에서 실행할 수 없다)
+    extraResource: [PYTHON_DIST],
   },
   rebuildConfig: {},
+  hooks: {
+    // Python 작업자를 빌드하지 않고 패키징하면, Python 없는 앱이 조용히 만들어진다. 미리 막는다
+    prePackage: async () => {
+      if (!fs.existsSync(PYTHON_DIST)) {
+        throw new Error(
+          `${PYTHON_DIST}가 없습니다. 먼저 npm run build:python을 실행하세요.`,
+        );
+      }
+    },
+  },
   makers: [
     new MakerSquirrel({}),
     new MakerZIP({}, ['darwin']),

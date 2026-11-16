@@ -11,4 +11,5 @@ dependencies = [
 ]
 
 [dependency-groups]
+build = ["pyinstaller>=6.22.3"]
 http = ["fastapi>=0.163.1", "uvicorn>=0.54.0"]

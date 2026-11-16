@@ -12,6 +12,7 @@
   "main": ".vite/build/main.cjs",
   "scripts": {
     "start": "electron-forge start",
+    "build:python": "cd python && uv run --group build python -m PyInstaller worker.py --name sales-worker --onedir --noconfirm --distpath ../python-dist --workpath build --specpath build",
     "package": "electron-forge package",
     "make": "electron-forge make",
     "release": "electron-forge release",
