@@ -25,6 +25,7 @@
 | `ch06-history` | 6장 | 일괄 처리 도구 + 설정 저장, SQLite(`node:sqlite`) 작업 이력과 FTS5 검색, safeStorage API 키 보관 |
 | `ch07-secure` | 7장 | 6장 앱 + IPC 송신자 검증, 내비게이션·새 창·권한 제한, 경로 이중 검사 (`src/main/security.ts`) |
 | `ch08-ai-feature` | 8장 | 7장 앱 + Claude Code와 함께 추가한 작업 이력 CSV 내보내기, 프로젝트 규칙(`CLAUDE.md`)·권한 설정(`.claude/settings.json`), `npm test` |
+| `ch09-workbench` | 9장 | AI 문서 분석 워크벤치: PDF·텍스트 불러오기, LLM 요약·핵심어·질문(스트리밍), SQLite 저장·검색, 오류 처리·취소 (태그 `ch09-step1`~`ch09-step5`, `ch09`) |
 
 장이 진행되면서 폴더가 추가됩니다. 단계별 결과는 Git 태그(예: `ch02`)로도 받을 수 있습니다.
 

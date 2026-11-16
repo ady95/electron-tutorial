@@ -16,6 +16,7 @@ import {
   originOf,
   parseAnalyzeRequest,
   setTimeoutForDev,
+  testConnection,
 } from './main/analysis';
 import { importDropped, openWithDialog, parseDropped } from './main/documents';
 import {
@@ -137,6 +138,8 @@ handle(IPC.analyze, (event, value: unknown) => {
   if (!req) return { ok: false, message: '잘못된 요청' };
   return analyze(event.sender, req);
 });
+
+handle(IPC.testConnection, () => testConnection());
 
 on(IPC.cancelAnalysis, (event, requestId: unknown) => {
   cancelAnalysis(event.sender, requestId);

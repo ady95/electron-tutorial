@@ -10,6 +10,7 @@ export const IPC = {
   saveLlmSettings: 'llm:save-settings',
   analyze: 'llm:analyze',
   cancelAnalysis: 'llm:cancel',
+  testConnection: 'llm:test',
   listAnalyses: 'analyses:list',
   search: 'search:query',
   llmDelta: 'llm:delta',
@@ -105,6 +106,11 @@ export interface SearchHit {
   snippet: string;
 }
 
+export interface ConnectionTestResult {
+  ok: boolean;
+  message: string;
+}
+
 export interface LlmDelta {
   requestId: number;
   delta: string;
@@ -127,6 +133,7 @@ export interface ExposedApi {
   saveLlmSettings: (settings: LlmSettings) => Promise<boolean>;
   analyze: (request: AnalyzeRequest) => Promise<AnalyzeResult>;
   cancelAnalysis: (requestId: number) => void;
+  testConnection: () => Promise<ConnectionTestResult>;
   onLlmDelta: (callback: (d: LlmDelta) => void) => () => void;
   listAnalyses: (docId: number) => Promise<AnalysisRecord[]>;
   search: (query: string) => Promise<SearchHit[]>;

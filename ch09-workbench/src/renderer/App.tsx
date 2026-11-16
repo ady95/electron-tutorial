@@ -19,6 +19,18 @@ export default function App() {
   const [busy, setBusy] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [llmReady, setLlmReady] = useState(true);
+
+  // 서버 주소와 모델이 어디에도 없으면 첫 화면에서 안내한다
+  useEffect(() => {
+    if (showSettings) return;
+    window.api.getLlmSettings().then(({ saved, fromEnv }) => {
+      setLlmReady(
+        (saved.baseUrl !== '' || fromEnv.baseUrl) &&
+          (saved.model !== '' || fromEnv.model),
+      );
+    });
+  }, [showSettings]);
   const [query, setQuery] = useState('');
   const [hits, setHits] = useState<SearchHit[]>([]);
   const [focusAnalysisId, setFocusAnalysisId] = useState<number | null>(null);
@@ -115,6 +127,12 @@ export default function App() {
           {showSettings ? '문서로 돌아가기' : '설정'}
         </button>
       </header>
+      {!llmReady && !showSettings && (
+        <p className="banner">
+          AI 분석을 쓰려면 먼저 LLM 서버 주소와 모델을 설정하세요.{' '}
+          <button onClick={() => setShowSettings(true)}>설정 열기</button>
+        </p>
+      )}
       {showSettings ? (
         <SettingsPanel />
       ) : (

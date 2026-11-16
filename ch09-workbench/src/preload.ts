@@ -11,6 +11,7 @@ const api: ExposedApi = {
   saveLlmSettings: (settings) =>
     ipcRenderer.invoke(IPC.saveLlmSettings, settings),
   analyze: (request) => ipcRenderer.invoke(IPC.analyze, request),
+  testConnection: () => ipcRenderer.invoke(IPC.testConnection),
   cancelAnalysis: (requestId) =>
     ipcRenderer.send(IPC.cancelAnalysis, requestId),
   onLlmDelta: (callback) => {

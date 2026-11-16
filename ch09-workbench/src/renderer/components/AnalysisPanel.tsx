@@ -34,6 +34,18 @@ export default function AnalysisPanel({
   const [history, setHistory] = useState<AnalysisRecord[]>([]);
   const [shownId, setShownId] = useState<number | null>(null);
   const currentId = useRef(0);
+  const [copied, setCopied] = useState('');
+
+  // 클립보드 쓰기는 7장의 권한 설정에서 이 권한 하나만 허용했다
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(output);
+      setCopied('복사했습니다.');
+    } catch {
+      setCopied('복사하지 못했습니다.');
+    }
+    setTimeout(() => setCopied(''), 2000);
+  };
 
   // 스트리밍 조각을 받아 화면에 이어 붙인다. 지금 요청의 조각만 받는다
   useEffect(
@@ -150,6 +162,12 @@ export default function AnalysisPanel({
       {shown && <p className="shown-title">{titleOf(shown)}</p>}
       {/* LLM 응답도 텍스트로만 표시한다 (HTML로 해석하지 않는다) */}
       {output && <pre className="output">{output}</pre>}
+      {output && !running && (
+        <div className="controls">
+          <button onClick={copy}>결과 복사</button>
+          {copied && <span className="status">{copied}</span>}
+        </div>
+      )}
       {error && <p className="error">{error}</p>}
       {shown && <p className="status">{metaOf(shown)}</p>}
 

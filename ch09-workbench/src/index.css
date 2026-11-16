@@ -263,3 +263,15 @@ body {
 .analysis ul.history li.selected {
   background: #e8eefc;
 }
+
+.banner {
+  margin: 0;
+  padding: 6px 12px;
+  background: #fff4e5;
+  border-bottom: 1px solid #f0c36d;
+}
+
+.warn-box ul {
+  margin: 4px 0 0;
+  padding-left: 18px;
+}

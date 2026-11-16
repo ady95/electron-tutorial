@@ -3,6 +3,7 @@ import {
   IPC,
   type AnalyzeRequest,
   type AnalyzeResult,
+  type ConnectionTestResult,
   type LlmSettingsView,
 } from '../shared/ipc';
 import { buildMessages, type AnalysisKind } from '../shared/prompts';
@@ -195,5 +196,34 @@ export async function analyze(
   } finally {
     running.delete(senderId);
     if (!sender.isDestroyed()) sender.off('destroyed', onGone);
+  }
+}
+
+// 설정 화면의 [연결 테스트]. 아주 짧은 요청을 보내 설정이 맞는지 확인한다
+export async function testConnection(): Promise<ConnectionTestResult> {
+  const config = await resolveConfig();
+  if (typeof config === 'string') return { ok: false, message: config };
+  const started = Date.now();
+  try {
+    const { text } = await streamChat(
+      config,
+      [{ role: 'user', content: '연결 확인입니다. "OK"라고만 답하세요.' }],
+      () => {},
+      {
+        signal: new AbortController().signal,
+        timeoutMs: Math.min(timeoutMs, 20_000),
+      },
+    );
+    return {
+      ok: true,
+      message: `연결되었습니다. 모델 ${config.model}, ${((Date.now() - started) / 1000).toFixed(1)}초, 응답: ${text.trim().slice(0, 20)}`,
+    };
+  } catch (err) {
+    const code = err instanceof LlmError ? err.code : 'network';
+    console.error(
+      `[LLM] test ${code}`,
+      err instanceof LlmError ? err.detail : err,
+    );
+    return { ok: false, message: MESSAGES[code] };
   }
 }

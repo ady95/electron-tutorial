@@ -115,13 +115,23 @@ export function applySecurity() {
     hardenContents(contents),
   );
   app.whenReady().then(() => {
-    // 이 앱은 카메라·위치·알림 등 웹 권한이 필요 없다. 모두 거부한다
+    // 카메라·위치·알림 등은 모두 거부하고, 꼭 필요한 권한만 앱 화면에 허용한다.
+    // 9장: 분석 결과 복사 버튼이 클립보드 쓰기(navigator.clipboard.writeText)를 쓴다
+    const allowed = (permission: string, url: string) =>
+      ALLOWED_PERMISSIONS.has(permission) && isAppUrl(url);
     session.defaultSession.setPermissionRequestHandler(
-      (_wc, permission, callback) => {
-        console.warn(`[보안] 권한 요청 거부: ${permission}`);
-        callback(false);
+      (wc, permission, callback, details) => {
+        const ok = allowed(permission, details.requestingUrl ?? wc.getURL());
+        if (!ok) console.warn(`[보안] 권한 요청 거부: ${permission}`);
+        callback(ok);
       },
     );
-    session.defaultSession.setPermissionCheckHandler(() => false);
+    // file:// 앱은 출처(origin)만으로 구분할 수 없으므로 가능하면 전체 URL로 확인한다
+    session.defaultSession.setPermissionCheckHandler(
+      (_wc, permission, requestingOrigin, details) =>
+        allowed(permission, details.requestingUrl ?? requestingOrigin),
+    );
   });
 }
+
+const ALLOWED_PERMISSIONS = new Set(['clipboard-sanitized-write']);

@@ -8,6 +8,16 @@ export default function SettingsPanel() {
   const [status, setStatus] = useState<SecretStatus | null>(null);
   const [keyInput, setKeyInput] = useState('');
   const [notice, setNotice] = useState('');
+  const [testing, setTesting] = useState(false);
+
+  // 저장된 설정으로 짧은 요청을 보내 본다
+  const test = async () => {
+    setTesting(true);
+    setNotice('연결을 확인하는 중...');
+    const r = await window.api.testConnection();
+    setNotice(r.ok ? r.message : `연결 실패: ${r.message}`);
+    setTesting(false);
+  };
 
   const reload = async () => {
     const v = await window.api.getLlmSettings();
@@ -70,6 +80,9 @@ export default function SettingsPanel() {
       </label>
       <div className="controls">
         <button onClick={saveLlm}>LLM 설정 저장</button>
+        <button onClick={test} disabled={testing}>
+          연결 테스트
+        </button>
       </div>
 
       <h3>API 키</h3>
