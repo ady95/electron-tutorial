@@ -1,0 +1,11 @@
+[project]
+name = "sales-report"
+version = "0.1.0"
+description = "지점별 매출 파일을 합쳐 월별 집계 보고서를 만든다 (Electron 따라하기 10장)"
+requires-python = ">=3.12"
+dependencies = [
+  # numpy 2.5.x의 DLL은 Windows 스마트 앱 컨트롤에 막혔다 (2026-11 실측). 평판이 쌓인 2.4.x를 쓴다
+  "numpy>=2.2,<2.5",
+  "openpyxl>=3.1.5",
+  "pandas>=3.1.1",
+]
