@@ -17,6 +17,7 @@ let ready = new Promise<void>((r) => (portReady = r));
 const statusWaiters: ((s: PythonStatus) => void)[] = [];
 const resultWaiters = new Map<string, (r: ReportResult) => void>();
 const progressListeners = new Set<(p: ReportProgress) => void>();
+const restartListeners = new Set<() => void>();
 
 const post = (m: PortRequest) => port?.postMessage(m);
 
@@ -45,6 +46,7 @@ ipcRenderer.on(IPC.pythonPort, (event) => {
     }
     resultWaiters.clear();
     ready = Promise.resolve();
+    queueMicrotask(() => restartListeners.forEach((cb) => cb()));
   }
   port = event.ports[0];
   port.onmessage = (e: MessageEvent<PortEvent>) => onPortEvent(e.data);
@@ -82,6 +84,10 @@ const api: ExposedApi = {
     return () => progressListeners.delete(callback);
   },
   openReport: () => ipcRenderer.send(IPC.openReport),
+  onPythonRestart: (callback) => {
+    restartListeners.add(callback);
+    return () => restartListeners.delete(callback);
+  },
 };
 
 contextBridge.exposeInMainWorld('api', api);

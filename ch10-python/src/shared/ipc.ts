@@ -57,4 +57,5 @@ export interface ExposedApi {
   cancelReport: (requestId: string) => void;
   onReportProgress: (callback: (p: ReportProgress) => void) => () => void;
   openReport: () => void;
+  onPythonRestart: (callback: () => void) => () => void; // 관리자가 다시 시작됐을 때
 }

@@ -20,7 +20,8 @@
     "lint:fix": "oxlint --fix && oxfmt --write",
     "typecheck": "tsc --noEmit",
     "check:security": "node scripts/check-security.mjs",
-    "test": "node scripts/test.mjs"
+    "test": "node scripts/test.mjs",
+    "test:python": "cd python && uv run python -m unittest"
   },
   "devDependencies": {
     "@electron-forge/cli": "^8.0.1",

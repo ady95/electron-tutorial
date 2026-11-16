@@ -26,6 +26,7 @@
 | `ch07-secure` | 7장 | 6장 앱 + IPC 송신자 검증, 내비게이션·새 창·권한 제한, 경로 이중 검사 (`src/main/security.ts`) |
 | `ch08-ai-feature` | 8장 | 7장 앱 + Claude Code와 함께 추가한 작업 이력 CSV 내보내기, 프로젝트 규칙(`CLAUDE.md`)·권한 설정(`.claude/settings.json`), `npm test` |
 | `ch09-workbench` | 9장 | AI 문서 분석 워크벤치: PDF·텍스트 불러오기, LLM 요약·핵심어·질문(스트리밍), SQLite 저장·검색, 오류 처리·취소 (태그 `ch09-step1`~`ch09-step5`, `ch09`) |
+| `ch10-python` | 10장 | 매출 보고서 도우미: 기존 Python(pandas) 스크립트를 표준 입출력(JSON Lines) 작업자로 연결, UtilityProcess·MessagePort 분리, FastAPI 방식 비교, PyInstaller 패키징 (태그 `ch10-step1`~`ch10-step5`, `ch10`) |
 
 장이 진행되면서 폴더가 추가됩니다. 단계별 결과는 Git 태그(예: `ch02`)로도 받을 수 있습니다.
 

@@ -17,10 +17,20 @@ export default function App() {
   const currentId = useRef<string | null>(null);
 
   useEffect(() => {
-    void window.api.pythonStatus().then(setStatus);
-    return window.api.onReportProgress((p) => {
+    const refresh = () => {
+      setStatus(null);
+      void window.api.pythonStatus().then(setStatus);
+    };
+    refresh();
+    // 관리자가 다시 시작되면 Python 상태를 다시 확인한다
+    const offRestart = window.api.onPythonRestart(refresh);
+    const offProgress = window.api.onReportProgress((p) => {
       if (p.requestId === currentId.current) setProgress(p);
     });
+    return () => {
+      offRestart();
+      offProgress();
+    };
   }, []);
 
   const choose = async () => {
