@@ -32,7 +32,7 @@ export function setTimeoutForDev(ms: number) {
 // 사용자에게 보여 줄 문장. 서버가 보낸 원문(키 일부가 들어 있을 수도 있다)은 화면에 내보내지 않는다
 const MESSAGES: Record<LlmErrorCode, string> = {
   network: 'LLM 서버에 연결하지 못했습니다. 서버 주소와 네트워크를 확인하세요.',
-  auth: 'API 키가 올바르지 않거나 권한이 없습니다. 설정에서 키를 확인하세요.',
+  auth: 'API 키(또는 사용자 토큰)가 올바르지 않거나 권한이 없습니다. 설정에서 확인하세요.',
   'not-found': '서버 주소나 모델 이름을 찾을 수 없습니다. 설정을 확인하세요.',
   'rate-limit':
     '요청 한도를 넘었습니다. 잠시 뒤 다시 시도하거나 사용량·결제 상태를 확인하세요.',

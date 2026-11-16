@@ -11,8 +11,9 @@ export const IPC = {
   startChat: 'chat:start',
 } as const;
 
-export type ProviderId = 'openai';
-export const PROVIDER_IDS: ProviderId[] = ['openai'];
+// openai: 사용자가 자기 API 키로 직접 / proxy: 회사 중계 서버에 사용자 토큰으로 (11-2)
+export type ProviderId = 'openai' | 'proxy';
+export const PROVIDER_IDS: ProviderId[] = ['openai', 'proxy'];
 
 export interface ProviderSettings {
   baseUrl: string; // 비어 있으면 환경 변수 값을 쓴다

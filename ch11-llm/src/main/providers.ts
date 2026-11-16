@@ -16,6 +16,12 @@ const ENV_NAMES: Record<
     model: 'OPENAI_MODEL',
     key: 'OPENAI_API_KEY',
   },
+  // 회사 중계 서버: 키 자리에 "사용자 토큰"이 들어간다. 진짜 API 키는 서버에만 있다
+  proxy: {
+    baseUrl: 'CHAT_PROXY_URL',
+    model: 'CHAT_PROXY_MODEL',
+    key: 'CHAT_PROXY_TOKEN',
+  },
 };
 
 export const originOf = (baseUrl: string) => {
@@ -27,14 +33,12 @@ export const originOf = (baseUrl: string) => {
 };
 
 export function defaultsView(): SettingsView['defaults'] {
-  const names = ENV_NAMES.openai;
-  return {
-    openai: {
-      baseUrl: env(names.baseUrl),
-      model: env(names.model),
-      hasKey: env(names.key) !== '',
-    },
-  };
+  const view = (id: ProviderId) => ({
+    baseUrl: env(ENV_NAMES[id].baseUrl),
+    model: env(ENV_NAMES[id].model),
+    hasKey: env(ENV_NAMES[id].key) !== '',
+  });
+  return { openai: view('openai'), proxy: view('proxy') };
 }
 
 // 지금 쓸 서버 주소. 설정 화면에 저장한 값이 먼저, 비어 있으면 환경 변수

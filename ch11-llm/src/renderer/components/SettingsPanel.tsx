@@ -6,28 +6,31 @@ import type {
   SettingsView,
 } from '../../shared/ipc';
 
-const LABELS: Record<ProviderId, string> = {
-  openai: 'OpenAI 호환 서버',
-};
+import { KEY_LABELS, PROVIDER_LABELS } from '../labels';
 
-export default function SettingsPanel({ onClose }: { onClose: () => void }) {
+// 헤더에서 고른 요청 경로(provider)의 서버 주소·모델·자격 증명을 편집한다
+export default function SettingsPanel({
+  provider: id,
+  onClose,
+}: {
+  provider: ProviderId;
+  onClose: () => void;
+}) {
   const [view, setView] = useState<SettingsView | null>(null);
   const [draft, setDraft] = useState<LlmSettings | null>(null);
   const [status, setStatus] = useState<SecretStatus | null>(null);
   const [keyInput, setKeyInput] = useState('');
   const [notice, setNotice] = useState('');
 
-  const id = draft?.active ?? 'openai';
-
   const reload = async () => {
     const v = await window.api.getSettings();
     setView(v);
     setDraft(v.saved);
-    setStatus(await window.api.secretStatus(v.saved.active));
+    setStatus(await window.api.secretStatus(id));
   };
   useEffect(() => {
     reload();
-  }, []);
+  }, [id]);
 
   if (!draft || !view)
     return <div className="panel settings">불러오는 중...</div>;
@@ -41,7 +44,7 @@ export default function SettingsPanel({ onClose }: { onClose: () => void }) {
     });
 
   const save = async () => {
-    const ok = await window.api.saveSettings(draft);
+    const ok = await window.api.saveSettings({ ...draft, active: id });
     setNotice(ok ? '설정을 저장했습니다.' : '주소 형식이 올바르지 않습니다.');
     reload();
   };
@@ -67,12 +70,17 @@ export default function SettingsPanel({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="panel settings">
-      <h3>{LABELS[id]}</h3>
+      <h3>{PROVIDER_LABELS[id]}</h3>
       <label>
         서버 주소
         <input
           value={current.baseUrl}
-          placeholder={hint(defaults.baseUrl, 'https://api.openai.com/v1')}
+          placeholder={hint(
+            defaults.baseUrl,
+            id === 'proxy'
+              ? 'https://ai.example.com/v1'
+              : 'https://api.openai.com/v1',
+          )}
           onChange={(e) => update({ baseUrl: e.target.value })}
         />
       </label>
@@ -88,7 +96,7 @@ export default function SettingsPanel({ onClose }: { onClose: () => void }) {
         <button onClick={save}>설정 저장</button>
       </div>
 
-      <h3>API 키</h3>
+      <h3>{KEY_LABELS[id]}</h3>
       <p>
         상태:{' '}
         {!status
@@ -102,7 +110,7 @@ export default function SettingsPanel({ onClose }: { onClose: () => void }) {
       <div className="controls">
         <input
           type="password"
-          placeholder="키 붙여넣기"
+          placeholder={`${KEY_LABELS[id]} 붙여넣기`}
           value={keyInput}
           onChange={(e) => setKeyInput(e.target.value)}
         />

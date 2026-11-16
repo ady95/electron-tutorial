@@ -14,6 +14,7 @@
 - `src/main/openai.ts` — OpenAI 호환 API 호출
 - `src/main/providers.ts` — 요청 경로 결정 (서버 주소·모델·키)
 - `src/main/secrets.ts` — safeStorage 키 저장
+- `proxy/server.mjs` — 회사 중계 서버 예제 (앱과 별도로 실행)
 - `src/preload.ts` — 요청마다 MessageChannel. 포트는 화면에 넘기지 않는다
 - `src/renderer/` — 화면. `markdown.ts`만 HTML을 만든다
 - `src/shared/` — 공용 타입과 순수 함수 (테스트 대상)
@@ -24,6 +25,7 @@
 - 키는 저장할 때의 서버 주소(origin)에만 보낸다. 환경 변수의 키는 서버 주소도 환경 변수일 때만 쓴다
 - LLM의 답은 신뢰하지 않는 입력이다. HTML로 바꿀 때는 반드시 `renderMarkdown()`(DOMPurify)을 거친다. 이미지는 불러오지 않는다
 - 재시도는 429·5xx만, 화면에 글자가 나오기 전에만 한다. 서버의 Retry-After를 따른다
+- 앱 코드·빌드 결과물에 API 키를 넣지 않는다 (`VITE_` 환경 변수 포함). 빌드 결과는 누구나 열어 볼 수 있다
 - 요청 하나는 포트 하나다. 포트가 닫히면(창 닫힘·새로고침) 요청을 끊는다
 
 ## 보안 규칙
