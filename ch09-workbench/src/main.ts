@@ -2,7 +2,17 @@ import { app, BrowserWindow, shell } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
 import { IPC } from './shared/ipc';
-import { getSettings, loadSettings, saveSettings } from './main/settings';
+import {
+  getSettings,
+  loadSettings,
+  parseLlmSettings,
+  saveSettings,
+} from './main/settings';
+import {
+  analyze,
+  getLlmSettingsView,
+  parseAnalyzeRequest,
+} from './main/analysis';
 import {
   getDocument,
   importDropped,
@@ -26,6 +36,16 @@ if (started) {
 
 // 창을 만들기 전에(ready 전에) 보안 설정을 건다
 applySecurity();
+
+// 개발 중에는 프로젝트 폴더의 .env를 환경 변수로 읽는다 (Node.js 내장 기능).
+// 배포한 앱에서는 읽지 않는다. 사용자는 설정 화면에서 값을 넣는다
+if (!app.isPackaged) {
+  try {
+    process.loadEnvFile(path.join(app.getAppPath(), '.env'));
+  } catch {
+    // .env가 없으면 그냥 넘어간다
+  }
+}
 
 const createWindow = () => {
   const { window: bounds } = getSettings();
@@ -79,6 +99,22 @@ handle(IPC.getDocument, (_event, id: unknown) =>
 handle(IPC.removeDocument, (_event, id: unknown) =>
   isId(id) ? removeDocument(id) : false,
 );
+
+// --- LLM ---
+handle(IPC.getLlmSettings, () => getLlmSettingsView());
+
+handle(IPC.saveLlmSettings, (_event, value: unknown) => {
+  const llm = parseLlmSettings(value);
+  if (!llm) return false;
+  saveSettings({ llm });
+  return true;
+});
+
+handle(IPC.analyze, (event, value: unknown) => {
+  const req = parseAnalyzeRequest(value);
+  if (!req) return { ok: false, message: '잘못된 요청' };
+  return analyze(event.sender, req);
+});
 
 // --- API 키 (6장) ---
 handle(IPC.secretStatus, () => getStatus());

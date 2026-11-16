@@ -1,10 +1,15 @@
 // Main과 Renderer가 함께 쓰는 IPC 채널 이름과 데이터 형식
+import type { AnalysisKind } from './prompts';
 export const IPC = {
   openDocuments: 'docs:open',
   importDocuments: 'docs:import',
   listDocuments: 'docs:list',
   getDocument: 'docs:get',
   removeDocument: 'docs:remove',
+  getLlmSettings: 'llm:get-settings',
+  saveLlmSettings: 'llm:save-settings',
+  analyze: 'llm:analyze',
+  llmDelta: 'llm:delta',
   secretStatus: 'secret:status',
   saveSecret: 'secret:save',
   clearSecret: 'secret:clear',
@@ -40,6 +45,41 @@ export interface ImportResult {
   errors: { name: string; message: string }[];
 }
 
+// LLM 연결 설정. API 키는 여기에 넣지 않는다 (safeStorage에 따로 저장)
+export interface LlmSettings {
+  baseUrl: string;
+  model: string;
+}
+
+// 설정 화면에 보여 줄 정보. 환경 변수는 값이 아니라 "설정되어 있는지"만 알린다
+export interface LlmSettingsView {
+  saved: LlmSettings;
+  fromEnv: { baseUrl: boolean; model: boolean; apiKey: boolean };
+}
+
+export interface AnalyzeRequest {
+  requestId: number; // 스트리밍 조각이 어느 요청의 것인지 구분한다
+  docId: number;
+  kind: AnalysisKind;
+  question: string; // kind가 qa일 때만
+}
+
+export type AnalyzeResult =
+  | {
+      ok: true;
+      text: string;
+      model: string;
+      sentChars: number;
+      clipped: boolean;
+      elapsedMs: number;
+    }
+  | { ok: false; message: string };
+
+export interface LlmDelta {
+  requestId: number;
+  delta: string;
+}
+
 export interface SecretStatus {
   available: boolean; // OS 암호화 사용 가능 여부
   saved: boolean;
@@ -52,6 +92,10 @@ export interface ExposedApi {
   listDocuments: () => Promise<DocSummary[]>;
   getDocument: (id: number) => Promise<DocDetail | null>;
   removeDocument: (id: number) => Promise<boolean>;
+  getLlmSettings: () => Promise<LlmSettingsView>;
+  saveLlmSettings: (settings: LlmSettings) => Promise<boolean>;
+  analyze: (request: AnalyzeRequest) => Promise<AnalyzeResult>;
+  onLlmDelta: (callback: (d: LlmDelta) => void) => () => void;
   secretStatus: () => Promise<SecretStatus>;
   saveSecret: (value: string) => Promise<{ ok: boolean; message?: string }>;
   clearSecret: () => Promise<void>;

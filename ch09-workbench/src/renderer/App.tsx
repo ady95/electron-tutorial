@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import type { DocDetail, DocSummary, ImportResult } from '../shared/ipc';
 import DocList from './components/DocList';
 import DocPreview from './components/DocPreview';
+import AnalysisPanel from './components/AnalysisPanel';
+import SettingsPanel from './components/SettingsPanel';
 
 export default function App() {
   const [docs, setDocs] = useState<DocSummary[]>([]);
@@ -10,6 +12,7 @@ export default function App() {
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
   const [dragging, setDragging] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   const reload = () => window.api.listDocuments().then(setDocs);
   useEffect(() => {
@@ -83,16 +86,24 @@ export default function App() {
         </span>
         {busy && <span>읽는 중...</span>}
         {notice && <span className="notice">{notice}</span>}
+        <button className="right" onClick={() => setShowSettings((v) => !v)}>
+          {showSettings ? '문서로 돌아가기' : '설정'}
+        </button>
       </header>
-      <main className="workspace">
-        <DocList
-          docs={docs}
-          selectedId={selectedId}
-          onSelect={setSelectedId}
-          onRemove={remove}
-        />
-        <DocPreview doc={selected} />
-      </main>
+      {showSettings ? (
+        <SettingsPanel />
+      ) : (
+        <main className="workspace">
+          <DocList
+            docs={docs}
+            selectedId={selectedId}
+            onSelect={setSelectedId}
+            onRemove={remove}
+          />
+          <DocPreview doc={selected} />
+          <AnalysisPanel doc={selected} />
+        </main>
+      )}
     </div>
   );
 }

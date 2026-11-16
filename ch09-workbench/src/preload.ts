@@ -1,5 +1,5 @@
-import { contextBridge, ipcRenderer } from 'electron';
-import { IPC, type ExposedApi } from './shared/ipc';
+import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron';
+import { IPC, type ExposedApi, type LlmDelta } from './shared/ipc';
 
 const api: ExposedApi = {
   openDocuments: () => ipcRenderer.invoke(IPC.openDocuments),
@@ -7,6 +7,16 @@ const api: ExposedApi = {
   listDocuments: () => ipcRenderer.invoke(IPC.listDocuments),
   getDocument: (id) => ipcRenderer.invoke(IPC.getDocument, id),
   removeDocument: (id) => ipcRenderer.invoke(IPC.removeDocument, id),
+  getLlmSettings: () => ipcRenderer.invoke(IPC.getLlmSettings),
+  saveLlmSettings: (settings) =>
+    ipcRenderer.invoke(IPC.saveLlmSettings, settings),
+  analyze: (request) => ipcRenderer.invoke(IPC.analyze, request),
+  onLlmDelta: (callback) => {
+    // 이벤트 객체는 넘기지 않고 데이터만 넘긴다
+    const listener = (_e: IpcRendererEvent, d: LlmDelta) => callback(d);
+    ipcRenderer.on(IPC.llmDelta, listener);
+    return () => ipcRenderer.removeListener(IPC.llmDelta, listener);
+  },
   secretStatus: () => ipcRenderer.invoke(IPC.secretStatus),
   saveSecret: (value) => ipcRenderer.invoke(IPC.saveSecret, value),
   clearSecret: () => ipcRenderer.invoke(IPC.clearSecret),

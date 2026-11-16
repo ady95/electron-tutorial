@@ -1,6 +1,7 @@
 import { app } from 'electron';
 import fs from 'node:fs';
 import path from 'node:path';
+import type { LlmSettings } from '../shared/ipc';
 
 export interface WindowBounds {
   x?: number;
@@ -12,18 +13,39 @@ export interface WindowBounds {
 export interface Settings {
   version: 1;
   window: WindowBounds;
+  llm: LlmSettings; // 빈 문자열이면 환경 변수 값을 쓴다
 }
 
 const DEFAULTS: Settings = {
   version: 1,
   window: { width: 1200, height: 800 },
+  llm: { baseUrl: '', model: '' },
 };
 
 const file = () => path.join(app.getPath('userData'), 'settings.json');
 
 let current: Settings = structuredClone(DEFAULTS);
 
-// 파일에서 읽은 값은 믿지 않고 하나씩 검사한다. 이상한 값은 기본값으로
+// 파일이나 Renderer에서 온 값은 믿지 않고 하나씩 검사한다. 이상한 값은 null
+export function parseLlmSettings(value: unknown): LlmSettings | null {
+  if (typeof value !== 'object' || value === null) return null;
+  const v = value as Record<string, unknown>;
+  if (typeof v.baseUrl !== 'string' || typeof v.model !== 'string') return null;
+  const baseUrl = v.baseUrl.trim();
+  const model = v.model.trim();
+  if (baseUrl.length > 300 || model.length > 100) return null;
+  // 주소는 비워 두거나 http(s) 주소여야 한다
+  if (baseUrl !== '') {
+    try {
+      const { protocol } = new URL(baseUrl);
+      if (protocol !== 'http:' && protocol !== 'https:') return null;
+    } catch {
+      return null;
+    }
+  }
+  return { baseUrl, model };
+}
+
 function parseBounds(value: unknown): WindowBounds | null {
   if (typeof value !== 'object' || value === null) return null;
   const b = value as Record<string, unknown>;
@@ -62,6 +84,7 @@ export function loadSettings(): Settings {
   current = {
     version: 1,
     window: parseBounds(s.window) ?? DEFAULTS.window,
+    llm: parseLlmSettings(s.llm) ?? DEFAULTS.llm,
   };
   return current;
 }
