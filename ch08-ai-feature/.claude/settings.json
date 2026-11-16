@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run typecheck)",
+      "Bash(npm run lint)",
+      "Bash(npm run lint:fix)",
+      "Bash(npm run check:security)",
+      "Bash(npm test)",
+      "Bash(git diff *)",
+      "Bash(git status)",
+      "PowerShell(npm run typecheck)",
+      "PowerShell(npm run lint)",
+      "PowerShell(npm run lint:fix)",
+      "PowerShell(npm run check:security)",
+      "PowerShell(npm test)",
+      "PowerShell(git diff *)",
+      "PowerShell(git status)"
+    ],
+    "deny": [
+      "Bash(git push *)",
+      "Bash(npm install *)",
+      "PowerShell(git push *)",
+      "PowerShell(npm install *)"
+    ]
+  }
+}
