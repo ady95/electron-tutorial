@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { test } from 'node:test';
+import { test } from 'vitest';
 import { estimateTokens } from './tokens.ts';
 
 test('한글은 글자당 1', () => {

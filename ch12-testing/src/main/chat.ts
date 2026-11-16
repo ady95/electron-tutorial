@@ -1,7 +1,6 @@
 // 대화 요청 하나를 처리한다. 요청마다 MessagePort 하나를 쓴다:
 // Main → Renderer: 응답 조각·재시도 안내·완료·오류 / Renderer → Main: 취소
 import type { MessagePortMain } from 'electron';
-import { setTimeout as sleep } from 'node:timers/promises';
 import {
   MAX_CHAT_MESSAGES,
   fitHistory,
@@ -67,6 +66,23 @@ function messageFor(code: LlmErrorCode, ollama: OllamaConfig | null) {
     return '추론에 컨텍스트를 다 써서 답을 끝내지 못했습니다. 설정에서 추론을 끄거나 컨텍스트를 늘리세요.';
   }
   return MESSAGES[code];
+}
+
+// 취소할 수 있는 대기. 전역 setTimeout을 쓴다
+// (12-2: node:timers/promises의 setTimeout은 Vitest의 가짜 타이머가 바꾸지 못해 테스트가 멈췄다)
+function sleep(ms: number, signal: AbortSignal) {
+  return new Promise<void>((resolve, reject) => {
+    if (signal.aborted) return reject(signal.reason);
+    const timer = setTimeout(resolve, ms);
+    signal.addEventListener(
+      'abort',
+      () => {
+        clearTimeout(timer);
+        reject(signal.reason);
+      },
+      { once: true },
+    );
+  });
 }
 
 const isObject = (v: unknown): v is Record<string, unknown> =>
@@ -197,7 +213,7 @@ async function run(
       }
       post({ type: 'retry', attempt, delayMs, reason: e.code });
       try {
-        await sleep(delayMs, undefined, { signal });
+        await sleep(delayMs, signal);
       } catch {
         return post({ type: 'error', message: MESSAGES.canceled });
       }

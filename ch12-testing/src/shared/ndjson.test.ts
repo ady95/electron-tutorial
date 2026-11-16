@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { test } from 'node:test';
+import { test } from 'vitest';
 import { createNdjsonParser } from './ndjson.ts';
 
 test('줄 중간에서 끊긴 조각을 이어 붙인다', () => {

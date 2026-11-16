@@ -44,6 +44,12 @@
 - 최적화는 측정으로 효과를 확인한 뒤에 넣는다. 결과를 바꾸지 못한 최적화는 넣지 않는다
 - 쓰지 않을 수도 있는 프로세스(Local AI Handler)는 필요할 때 시작한다
 
+## 테스트 규칙 (12-2)
+
+- 단위 테스트는 Vitest. `src/**/*.test.ts`에 둔다. electron을 불러오는 모듈은 `vi.mock`으로 바꿔 Electron 없이 실행한다
+- 시간을 기다리는 코드는 전역 `setTimeout`을 쓴다. `node:timers/promises`는 가짜 타이머가 바꾸지 못한다
+- 보안 규칙(송신자 검증, 키 전송 대상)을 고치면 해당 테스트를 먼저 고치고 통과시킨다
+
 ## 보안 규칙
 
 - IPC는 `src/main/security.ts`의 `handle()`/`on()`으로 등록한다 (송신자 검증)
@@ -58,7 +64,8 @@
 ## 검증 명령
 
 ```bash
-npm test             # 단위 테스트 (Electron 런타임)
+npm test             # Vitest 단위 테스트
+npm run test:electron  # 같은 테스트를 Electron 런타임으로 (Node 버전 차이 확인)
 npm run typecheck
 npm run lint
 npm run check:security

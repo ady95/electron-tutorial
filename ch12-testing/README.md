@@ -36,6 +36,7 @@ npm run proxy                      # http://127.0.0.1:8787/v1
 | 태그         | 내용                                                                                                                     |
 | ------------ | ------------------------------------------------------------------------------------------------------------------------ |
 | `ch12-step1` | 성능 측정(`CHAT_PERF=1`), Local AI Handler 지연 시작, 긴 대화에서 요청이 거부되던 버그 수정, 첫 화면이 그려진 뒤 창 표시 |
+| `ch12-step2` | Vitest 단위 테스트 53개: SSE·UTF-8 조각, 재시도(가짜 타이머), IPC 송신자 검증(electron 모의), 키 전송 규칙, 커버리지     |
 
 ## 구성
 
@@ -70,7 +71,9 @@ Windows PowerShell에서는 `$env:CHAT_PERF="1"; npx electron .`로 실행합니
 ## 검증
 
 ```bash
-npm test
+npm test                # Vitest (시스템 Node.js)
+npm run test:electron   # 같은 테스트를 Electron에 들어 있는 Node.js로
+npm run coverage        # 커버리지
 npm run typecheck
 npm run lint
 npm run check:security

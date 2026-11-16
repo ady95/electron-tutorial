@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { test } from 'node:test';
+import { test } from 'vitest';
 import { parseRetryAfter, retryDelay } from './retry.ts';
 
 test('Retry-After 초 단위', () => {
