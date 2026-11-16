@@ -47,6 +47,7 @@ export interface StreamResult {
   text: string;
   finishReason: string | null;
   usage: Usage | null;
+  tokensPerSec?: number | null; // 생성 속도. 알려 주는 서버만 (Ollama)
 }
 
 // 사용자 취소와 시간 초과를 하나의 AbortController로 합친다.

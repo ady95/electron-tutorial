@@ -146,3 +146,20 @@ body {
 .result {
   font-weight: bold;
 }
+
+.settings select {
+  display: block;
+  margin-top: 4px;
+}
+
+.settings label.check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.settings label.check input {
+  display: inline;
+  width: auto;
+  margin: 0;
+}

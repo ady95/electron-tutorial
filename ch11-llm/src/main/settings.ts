@@ -2,7 +2,9 @@ import { app } from 'electron';
 import fs from 'node:fs';
 import path from 'node:path';
 import {
+  NUM_CTX_CHOICES,
   PROVIDER_IDS,
+  type LocalOptions,
   type LlmSettings,
   type ProviderId,
   type ProviderSettings,
@@ -29,7 +31,12 @@ const emptyProviders = () =>
 const DEFAULTS: Settings = {
   version: 1,
   window: { width: 1000, height: 760 },
-  llm: { active: 'openai', providers: emptyProviders() },
+  llm: {
+    active: 'openai',
+    providers: emptyProviders(),
+    // Ollama 기본값(4096) 대신 넉넉하게. 추론은 꺼 둔다 (11-3 실측: 켜면 짧은 질문에도 40초 넘게 생각한다)
+    local: { numCtx: 16384, think: false },
+  },
 };
 
 const file = () => path.join(app.getPath('userData'), 'settings.json');
@@ -59,6 +66,17 @@ function parseProvider(value: unknown): ProviderSettings | null {
   return { baseUrl, model };
 }
 
+function parseLocal(value: unknown): LocalOptions {
+  const fallback = DEFAULTS.llm.local;
+  if (!isObject(value)) return { ...fallback };
+  return {
+    numCtx: NUM_CTX_CHOICES.includes(value.numCtx as number)
+      ? (value.numCtx as number)
+      : fallback.numCtx,
+    think: typeof value.think === 'boolean' ? value.think : fallback.think,
+  };
+}
+
 // 파일이나 Renderer에서 온 값은 믿지 않고 하나씩 검사한다. 이상한 값은 null
 export function parseLlmSettings(value: unknown): LlmSettings | null {
   if (!isObject(value) || !isObject(value.providers)) return null;
@@ -69,7 +87,11 @@ export function parseLlmSettings(value: unknown): LlmSettings | null {
     if (!p) return null;
     providers[id] = p;
   }
-  return { active: value.active as ProviderId, providers };
+  return {
+    active: value.active as ProviderId,
+    providers,
+    local: parseLocal(value.local),
+  };
 }
 
 function parseBounds(value: unknown): WindowBounds | null {

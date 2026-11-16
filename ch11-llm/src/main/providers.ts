@@ -22,6 +22,17 @@ const ENV_NAMES: Record<
     model: 'CHAT_PROXY_MODEL',
     key: 'CHAT_PROXY_TOKEN',
   },
+  // 내 PC의 Ollama. 키가 없다 (11-3)
+  ollama: {
+    baseUrl: 'OLLAMA_BASE_URL',
+    model: 'OLLAMA_MODEL',
+    key: '',
+  },
+};
+
+// 아무것도 설정하지 않았을 때의 서버 주소
+const DEFAULT_BASE_URL: Partial<Record<ProviderId, string>> = {
+  ollama: 'http://localhost:11434',
 };
 
 export const originOf = (baseUrl: string) => {
@@ -36,14 +47,26 @@ export function defaultsView(): SettingsView['defaults'] {
   const view = (id: ProviderId) => ({
     baseUrl: env(ENV_NAMES[id].baseUrl),
     model: env(ENV_NAMES[id].model),
-    hasKey: env(ENV_NAMES[id].key) !== '',
+    hasKey: ENV_NAMES[id].key !== '' && env(ENV_NAMES[id].key) !== '',
   });
-  return { openai: view('openai'), proxy: view('proxy') };
+  return {
+    openai: view('openai'),
+    proxy: view('proxy'),
+    ollama: {
+      ...view('ollama'),
+      baseUrl: env(ENV_NAMES.ollama.baseUrl) || DEFAULT_BASE_URL.ollama || '',
+    },
+  };
 }
 
 // 지금 쓸 서버 주소. 설정 화면에 저장한 값이 먼저, 비어 있으면 환경 변수
 export function currentBaseUrl(id: ProviderId) {
-  return getSettings().llm.providers[id].baseUrl || env(ENV_NAMES[id].baseUrl);
+  return (
+    getSettings().llm.providers[id].baseUrl ||
+    env(ENV_NAMES[id].baseUrl) ||
+    DEFAULT_BASE_URL[id] ||
+    ''
+  );
 }
 
 export type ResolvedProvider = { id: ProviderId } & OpenAiConfig;
@@ -60,6 +83,7 @@ export async function resolveProvider(
   const model = saved.model || env(names.model);
   if (!baseUrl) return 'LLM 서버 주소가 없습니다. 설정에서 입력하세요.';
   if (!model) return '모델 이름이 없습니다. 설정에서 입력하세요.';
+  if (id === 'ollama') return { id, baseUrl, model, apiKey: '' }; // 로컬 모델은 키가 없다
 
   const origin = originOf(baseUrl);
   let stored: { key: string; origin: string } | null = null;

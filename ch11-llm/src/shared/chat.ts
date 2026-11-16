@@ -44,3 +44,26 @@ export function fitHistory(
     size,
   };
 }
+
+export interface Turn {
+  role: 'user' | 'assistant';
+  content: string;
+  done: boolean; // 답변이 끝까지 완료되었는가 (질문은 항상 true)
+}
+
+// 화면의 대화에서 "완료된 질문-답변 쌍"만 이력으로 고른다.
+// 오류·중지된 답변은 물론, 그 답변을 받지 못한 질문도 다시 보내지 않는다
+// (예: 너무 길어 거절된 질문이 다음 요청마다 다시 실리는 것을 막는다)
+export function completedTurns(turns: Turn[]): ChatMessage[] {
+  const out: ChatMessage[] = [];
+  for (let i = 0; i < turns.length - 1; i++) {
+    const q = turns[i];
+    const a = turns[i + 1];
+    if (q.role === 'user' && a.role === 'assistant' && a.done) {
+      out.push({ role: 'user', content: q.content });
+      out.push({ role: 'assistant', content: a.content });
+      i++;
+    }
+  }
+  return out;
+}

@@ -1,6 +1,6 @@
 // 대화 상태와 스트리밍 처리
 import { useCallback, useRef, useState } from 'react';
-import type { ChatMessage } from '../shared/chat';
+import { completedTurns, type ChatMessage } from '../shared/chat';
 import type { ChatEvent, ChatHandle, ProviderId } from '../shared/ipc';
 
 export interface UiMessage {
@@ -10,7 +10,8 @@ export interface UiMessage {
   reasoning: string;
   state: 'streaming' | 'done' | 'error';
   startedAt: number;
-  notice?: string; // 재시도 안내, 보내지 않은 이전 대화 등
+  notice?: string; // 잠깐 보여 줄 안내 (재시도, 모델 불러오는 중). 첫 글자가 오면 지운다
+  dropped?: number; // 길이 제한 때문에 보내지 않은 이전 메시지 수 (계속 보여 준다)
   meta?: string; // 완료 후: 시간·토큰
   error?: string;
 }
@@ -24,6 +25,7 @@ function describeDone(e: Extract<ChatEvent, { type: 'done' }>) {
   if (e.usage) {
     parts.push(`토큰 ${e.usage.promptTokens}+${e.usage.completionTokens}`);
   }
+  if (e.tokensPerSec) parts.push(`초당 ${e.tokensPerSec.toFixed(1)}토큰`);
   if (e.finishReason && e.finishReason !== 'stop') {
     parts.push(`종료 이유 ${e.finishReason}`);
   }
@@ -69,10 +71,10 @@ export function useChat(provider: ProviderId) {
   const send = useCallback(
     (text: string) => {
       if (busy || text.trim() === '') return;
-      // 완료된 답변만 이력으로 보낸다 (오류·중지된 답변은 빼고, 질문은 남긴다)
-      const history: ChatMessage[] = messages
-        .filter((m) => m.role === 'user' || m.state === 'done')
-        .map((m) => ({ role: m.role, content: m.content }));
+      // 완료된 질문-답변 쌍만 이력으로 보낸다
+      const history: ChatMessage[] = completedTurns(
+        messages.map((m) => ({ ...m, done: m.state === 'done' })),
+      );
       history.push({ role: 'user', content: text });
 
       const userId = nextId.current++;
@@ -104,10 +106,10 @@ export function useChat(provider: ProviderId) {
             return queue(id, 'content', e.text);
           case 'reasoning':
             return queue(id, 'reasoning', e.text);
+          case 'status':
+            return patch(id, () => ({ notice: e.text }));
           case 'context':
-            return patch(id, () => ({
-              notice: `길이 제한 때문에 앞의 대화 ${e.dropped}개는 보내지 않았습니다.`,
-            }));
+            return patch(id, () => ({ dropped: e.dropped }));
           case 'retry':
             return patch(id, () => ({
               notice: `${e.reason === 'rate-limit' ? '요청 한도 초과' : '서버 오류'}. ${seconds(e.delayMs)} 뒤 다시 시도합니다 (${e.attempt}번째).`,

@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
-import type {
-  LlmSettings,
-  ProviderId,
-  SecretStatus,
-  SettingsView,
+import {
+  NUM_CTX_CHOICES,
+  type LlmSettings,
+  type ProviderId,
+  type SecretStatus,
+  type SettingsView,
 } from '../../shared/ipc';
-
 import { KEY_LABELS, PROVIDER_LABELS } from '../labels';
 
 // 헤더에서 고른 요청 경로(provider)의 서버 주소·모델·자격 증명을 편집한다
@@ -21,6 +21,14 @@ export default function SettingsPanel({
   const [status, setStatus] = useState<SecretStatus | null>(null);
   const [keyInput, setKeyInput] = useState('');
   const [notice, setNotice] = useState('');
+  // 11-3: Ollama에 설치된 대화 모델 목록
+  const [models, setModels] = useState<string[] | null>(null);
+
+  const loadModels = async () => {
+    const r = await window.api.listLocalModels();
+    setModels(r.ok ? r.models : []);
+    if (!r.ok) setNotice(r.message);
+  };
 
   const reload = async () => {
     const v = await window.api.getSettings();
@@ -30,6 +38,7 @@ export default function SettingsPanel({
   };
   useEffect(() => {
     reload();
+    if (id === 'ollama') loadModels();
   }, [id]);
 
   if (!draft || !view)
@@ -79,48 +88,106 @@ export default function SettingsPanel({
             defaults.baseUrl,
             id === 'proxy'
               ? 'https://ai.example.com/v1'
-              : 'https://api.openai.com/v1',
+              : id === 'ollama'
+                ? 'http://localhost:11434'
+                : 'https://api.openai.com/v1',
           )}
           onChange={(e) => update({ baseUrl: e.target.value })}
         />
       </label>
       <label>
         모델
-        <input
-          value={current.model}
-          placeholder={hint(defaults.model, '사용할 모델 이름')}
-          onChange={(e) => update({ model: e.target.value })}
-        />
+        {id === 'ollama' && models && models.length > 0 ? (
+          <select
+            value={current.model}
+            onChange={(e) => update({ model: e.target.value })}
+          >
+            <option value="">(선택)</option>
+            {models.map((m) => (
+              <option key={m} value={m}>
+                {m}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <input
+            value={current.model}
+            placeholder={hint(defaults.model, '사용할 모델 이름')}
+            onChange={(e) => update({ model: e.target.value })}
+          />
+        )}
       </label>
+      {id === 'ollama' && (
+        <>
+          <div className="controls">
+            <button onClick={loadModels}>모델 목록 새로고침</button>
+          </div>
+          <label>
+            컨텍스트 크기 (토큰)
+            <select
+              value={draft.local.numCtx}
+              onChange={(e) =>
+                setDraft({
+                  ...draft,
+                  local: { ...draft.local, numCtx: Number(e.target.value) },
+                })
+              }
+            >
+              {NUM_CTX_CHOICES.map((n) => (
+                <option key={n} value={n}>
+                  {n.toLocaleString()}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="check">
+            <input
+              type="checkbox"
+              checked={draft.local.think}
+              onChange={(e) =>
+                setDraft({
+                  ...draft,
+                  local: { ...draft.local, think: e.target.checked },
+                })
+              }
+            />
+            추론(thinking) 켜기 — 답이 느려지고 컨텍스트를 많이 씁니다
+          </label>
+        </>
+      )}
       <div className="controls">
         <button onClick={save}>설정 저장</button>
       </div>
 
-      <h3>{KEY_LABELS[id]}</h3>
-      <p>
-        상태:{' '}
-        {!status
-          ? '확인 중...'
-          : status.saved
-            ? `저장됨 (끝자리 ...${status.last4}, ${status.origin} 전용)`
-            : defaults.hasKey
-              ? '저장된 키 없음 (환경 변수 사용)'
-              : '저장된 키 없음'}
-      </p>
-      <div className="controls">
-        <input
-          type="password"
-          placeholder={`${KEY_LABELS[id]} 붙여넣기`}
-          value={keyInput}
-          onChange={(e) => setKeyInput(e.target.value)}
-        />
-        <button onClick={saveKey} disabled={keyInput.trim() === ''}>
-          저장
-        </button>
-        <button onClick={clearKey} disabled={!status?.saved}>
-          삭제
-        </button>
-      </div>
+      {id !== 'ollama' && (
+        <>
+          <h3>{KEY_LABELS[id]}</h3>
+          <p>
+            상태:{' '}
+            {!status
+              ? '확인 중...'
+              : status.saved
+                ? `저장됨 (끝자리 ...${status.last4}, ${status.origin} 전용)`
+                : defaults.hasKey
+                  ? '저장된 키 없음 (환경 변수 사용)'
+                  : '저장된 키 없음'}
+          </p>
+          <div className="controls">
+            <input
+              type="password"
+              placeholder={`${KEY_LABELS[id]} 붙여넣기`}
+              value={keyInput}
+              onChange={(e) => setKeyInput(e.target.value)}
+            />
+            <button onClick={saveKey} disabled={keyInput.trim() === ''}>
+              저장
+            </button>
+            <button onClick={clearKey} disabled={!status?.saved}>
+              삭제
+            </button>
+          </div>
+        </>
+      )}
       {notice && <p className="result">{notice}</p>}
       <div className="controls">
         <button onClick={onClose}>대화로 돌아가기</button>

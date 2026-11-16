@@ -9,6 +9,7 @@ import {
   saveSettings,
 } from './main/settings';
 import { setTimeoutForDev, startChat } from './main/chat';
+import { listChatModels } from './main/ollama';
 import { currentBaseUrl, defaultsView, originOf } from './main/providers';
 import { clearKey, keyStatus, saveKey } from './main/secrets';
 import {
@@ -99,6 +100,19 @@ handle(IPC.saveSecret, (_event, id: unknown, value: unknown) => {
 handle(IPC.clearSecret, (_event, id: unknown) =>
   isProvider(id) ? clearKey(id) : undefined,
 );
+
+// --- 로컬 모델 (11-3) ---
+handle(IPC.listLocalModels, async () => {
+  try {
+    return { ok: true, models: await listChatModels(currentBaseUrl('ollama')) };
+  } catch (err) {
+    console.error('[Ollama] 모델 목록', err);
+    return {
+      ok: false,
+      message: 'Ollama에 연결하지 못했습니다. Ollama가 실행 중인지 확인하세요.',
+    };
+  }
+});
 
 // --- 대화 ---
 // Renderer가 MessagePort를 함께 보낸다. 포트가 없으면 응답을 돌려줄 곳이 없으니 무시한다

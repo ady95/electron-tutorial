@@ -35,6 +35,11 @@ export default function MessageView({ message }: { message: UiMessage }) {
           <pre>{reasoning}</pre>
         </details>
       )}
+      {message.dropped ? (
+        <p className="notice">
+          길이 제한 때문에 앞의 대화 {message.dropped}개는 보내지 않았습니다.
+        </p>
+      ) : null}
       {message.notice && <p className="notice">{message.notice}</p>}
       {state === 'streaming' && content === '' && reasoning === '' && (
         <Waiting since={message.startedAt} />

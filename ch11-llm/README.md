@@ -10,6 +10,16 @@ cp .env.example .env   # 값을 채운다 (또는 앱의 설정 화면에서 입
 npm start
 ```
 
+### 내 PC의 Ollama (11-3)
+
+[Ollama](https://ollama.com)를 설치하고 대화 모델을 하나 받습니다.
+
+```bash
+ollama pull qwen3.5:9b
+```
+
+앱의 머리글에서 "내 PC (Ollama)"를 고르고, 설정에서 모델·컨텍스트 크기·추론 켜기를 정합니다.
+
 ### 회사 중계 서버 (11-2)
 
 진짜 API 키는 중계 서버에만 두고, 앱에는 사용자별 토큰만 넣습니다.

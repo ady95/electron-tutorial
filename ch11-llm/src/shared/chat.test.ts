@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { fitHistory, type ChatMessage } from './chat.ts';
+import { completedTurns, fitHistory, type ChatMessage } from './chat.ts';
 
 const u = (content: string): ChatMessage => ({ role: 'user', content });
 const a = (content: string): ChatMessage => ({ role: 'assistant', content });
@@ -46,4 +46,21 @@ test('measure 함수로 단위를 바꿀 수 있다', () => {
     fitHistory('', history, 4, (t) => Math.ceil(t.length / 2))?.dropped,
     0,
   );
+});
+
+test('완료된 질문-답변 쌍만 고른다', () => {
+  const turns = [
+    { role: 'user' as const, content: '질문1', done: true },
+    { role: 'assistant' as const, content: '답1', done: true },
+    { role: 'user' as const, content: '너무 긴 질문', done: true },
+    { role: 'assistant' as const, content: '', done: false }, // 거절·오류·중지
+    { role: 'user' as const, content: '질문3', done: true },
+    { role: 'assistant' as const, content: '답3', done: true },
+  ];
+  assert.deepEqual(completedTurns(turns), [
+    u('질문1'),
+    a('답1'),
+    u('질문3'),
+    a('답3'),
+  ]);
 });

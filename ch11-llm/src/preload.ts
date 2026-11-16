@@ -29,6 +29,7 @@ const api: ExposedApi = {
       },
     };
   },
+  listLocalModels: () => ipcRenderer.invoke(IPC.listLocalModels),
 };
 
 contextBridge.exposeInMainWorld('api', api);

@@ -12,6 +12,7 @@
 
 - `src/main/chat.ts` — 대화 요청 처리 (이력 고르기, 재시도, 포트로 결과 전송)
 - `src/main/openai.ts` — OpenAI 호환 API 호출
+- `src/main/ollama.ts` — Ollama 고유 API 호출 (num_ctx, think)
 - `src/main/providers.ts` — 요청 경로 결정 (서버 주소·모델·키)
 - `src/main/secrets.ts` — safeStorage 키 저장
 - `proxy/server.mjs` — 회사 중계 서버 예제 (앱과 별도로 실행)
@@ -26,6 +27,7 @@
 - LLM의 답은 신뢰하지 않는 입력이다. HTML로 바꿀 때는 반드시 `renderMarkdown()`(DOMPurify)을 거친다. 이미지는 불러오지 않는다
 - 재시도는 429·5xx만, 화면에 글자가 나오기 전에만 한다. 서버의 Retry-After를 따른다
 - 앱 코드·빌드 결과물에 API 키를 넣지 않는다 (`VITE_` 환경 변수 포함). 빌드 결과는 누구나 열어 볼 수 있다
+- 로컬 모델은 컨텍스트를 넘기면 앞부분을 조용히 버린다. 보내기 전에 `estimateTokens()`로 어림해 `fitHistory()`로 맞춘다
 - 요청 하나는 포트 하나다. 포트가 닫히면(창 닫힘·새로고침) 요청을 끊는다
 
 ## 보안 규칙
