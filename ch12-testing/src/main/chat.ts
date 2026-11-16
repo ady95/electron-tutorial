@@ -19,6 +19,7 @@ import { isLoaded, streamOllama, type OllamaConfig } from './ollama';
 import { streamOpenAi } from './openai';
 import { resolveProvider } from './providers';
 import { getSettings } from './settings';
+import { log } from './log';
 
 const SYSTEM_PROMPT =
   '당신은 데스크톱 앱 안의 도우미입니다. 한국어로 간결하게 답하고, 필요하면 마크다운을 씁니다.';
@@ -195,7 +196,7 @@ async function run(
       const e =
         err instanceof LlmError ? err : new LlmError('network', String(err));
       // 자세한 내용은 개발자용 로그에만 남긴다
-      console.error(`[LLM] ${e.code} (시도 ${attempt})`, e.detail);
+      log.error(`[LLM] ${e.code} (시도 ${attempt})`, e.detail);
       // 이미 화면에 글자가 나왔다면 재시도하지 않는다 (같은 답이 두 번 이어 붙는다)
       const canRetry =
         attempt <= MAX_RETRIES &&

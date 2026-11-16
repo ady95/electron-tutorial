@@ -17,6 +17,7 @@
 - `src/main/secrets.ts` — safeStorage 키 저장
 - `proxy/server.mjs` — 회사 중계 서버 예제 (앱과 별도로 실행)
 - `src/ai-handler.ts` + `src/main/local-ai.ts` — Local AI Handler (실험 기능, UtilityProcess)
+- `src/main/log.ts`, `src/main/crash.ts` — 로그 파일, 크래시·예외 처리 (12-4)
 - `src/preload.ts` — 요청마다 MessageChannel. 포트는 화면에 넘기지 않는다
 - `src/renderer/` — 화면. `markdown.ts`만 HTML을 만든다
 - `src/shared/` — 공용 타입과 순수 함수 (테스트 대상)
@@ -52,6 +53,13 @@
 - 패키지 앱은 Fuse 때문에 Playwright가 붙지 못한다. `tests/smoke-packaged.mjs`로 실행 여부만 확인한다
 - 테스트용 파일에서 `import.meta`와 최상위 `await`를 쓰지 않는다 (Playwright가 CommonJS로 바꿔 실행한다)
 - 보안 규칙(송신자 검증, 키 전송 대상)을 고치면 해당 테스트를 먼저 고치고 통과시킨다
+
+## 로그·오류 규칙 (12-4)
+
+- Main에서 기록할 때는 `console` 대신 `src/main/log.ts`의 `log`를 쓴다. 비밀은 `redact()`로 가려진다
+- 화면 오류는 `window.api.reportError`로 Main 로그에 모인다. 사용자에게는 원문 대신 할 일을 안내한다
+- 배포본에서 개발자 도구와 원격 디버깅 스위치를 다시 허용하지 않는다
+- 소스맵은 개발 빌드에만 만든다
 
 ## 보안 규칙
 

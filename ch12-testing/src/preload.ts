@@ -31,6 +31,8 @@ const api: ExposedApi = {
   },
   listLocalModels: () => ipcRenderer.invoke(IPC.listLocalModels),
   enableLocalAi: () => ipcRenderer.invoke(IPC.enableLocalAi),
+  reportError: (message) => ipcRenderer.send(IPC.reportError, message),
+  openLogs: () => ipcRenderer.invoke(IPC.openLogs),
 };
 
 contextBridge.exposeInMainWorld('api', api);

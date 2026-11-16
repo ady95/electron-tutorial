@@ -5,6 +5,7 @@ import type { LocalAiConfig } from '../ai-handler';
 import { currentBaseUrl } from './providers';
 import { appOrigin } from './security';
 import { getSettings } from './settings';
+import { log } from './log';
 
 let proc: UtilityProcess | null = null;
 let restarts: number[] = []; // 최근 재시작 시각. 바로 죽는 경우 무한 재시작을 막는다
@@ -41,13 +42,13 @@ export function startLocalAi() {
     const now = Date.now();
     restarts = restarts.filter((t) => now - t < 60_000);
     if (restarts.length >= 3) {
-      console.error(
+      log.error(
         `[Local AI] 1분 안에 3번 종료되어 다시 시작하지 않습니다 (code ${code}).`,
       );
       return;
     }
     restarts.push(now);
-    console.warn(`[Local AI] 종료됨 (code ${code}). 다시 시작합니다.`);
+    log.warn(`[Local AI] 종료됨 (code ${code}). 다시 시작합니다.`);
     setTimeout(startLocalAi, 1000);
   });
 }

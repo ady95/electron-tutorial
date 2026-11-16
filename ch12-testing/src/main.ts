@@ -1,6 +1,6 @@
 // 12-1: 측정 모듈을 가장 먼저 불러 "Main 코드를 읽기 시작한 시점"을 기록한다
 import { mark, report } from './main/perf';
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, shell } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
 import { IPC, PROVIDER_IDS, type ProviderId } from './shared/ipc';
@@ -11,6 +11,8 @@ import {
   saveSettings,
 } from './main/settings';
 import { setTimeoutForDev, startChat } from './main/chat';
+import { setupCrashHandling } from './main/crash';
+import { log, logDir } from './main/log';
 import { ensureLocalAi, updateLocalAi } from './main/local-ai';
 import { listChatModels } from './main/ollama';
 import { currentBaseUrl, defaultsView, originOf } from './main/providers';
@@ -26,6 +28,20 @@ import {
 if (started) {
   app.quit();
 }
+
+// 12-4: 배포본이 원격 디버깅 스위치로 실행되면 바로 끝낸다.
+// (12-3 실측: Fuse로 Node 디버거를 막아도 --remote-debugging-port로는 화면과 window.api를 조작할 수 있었다)
+if (
+  app.isPackaged &&
+  ['remote-debugging-port', 'remote-debugging-pipe'].some((s) =>
+    app.commandLine.hasSwitch(s),
+  )
+) {
+  app.exit(1);
+}
+
+// 12-4: 크래시 기록과 예상하지 못한 오류 처리. 가능한 한 일찍 건다
+setupCrashHandling();
 
 // 창을 만들기 전에(ready 전에) 보안 설정을 건다
 applySecurity();
@@ -53,6 +69,8 @@ const createWindow = () => {
       contextIsolation: true,
       sandbox: true,
       nodeIntegration: false,
+      // 12-4: 배포본에서는 개발자 도구를 열 수 없게 한다
+      devTools: !app.isPackaged,
     },
   });
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
@@ -120,7 +138,7 @@ handle(IPC.listLocalModels, async () => {
   try {
     return { ok: true, models: await listChatModels(currentBaseUrl('ollama')) };
   } catch (err) {
-    console.error('[Ollama] 모델 목록', err);
+    log.error('[Ollama] 모델 목록', err);
     return {
       ok: false,
       message: 'Ollama에 연결하지 못했습니다. Ollama가 실행 중인지 확인하세요.',
@@ -129,6 +147,17 @@ handle(IPC.listLocalModels, async () => {
 });
 
 handle(IPC.enableLocalAi, () => ensureLocalAi());
+
+// --- 오류 기록 (12-4) ---
+// 화면에서 보낸 오류 문장은 믿지 않는 입력이다. 문자열만, 길이를 잘라 기록한다
+on(IPC.reportError, (_event, message: unknown) => {
+  if (typeof message !== 'string') return;
+  log.error('[Renderer]', message.slice(0, 5000));
+});
+
+handle(IPC.openLogs, async () => {
+  await shell.openPath(logDir());
+});
 
 // --- 대화 ---
 // Renderer가 MessagePort를 함께 보낸다. 포트가 없으면 응답을 돌려줄 곳이 없으니 무시한다

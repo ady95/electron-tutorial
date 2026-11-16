@@ -9,6 +9,7 @@ import {
   type ProviderId,
   type ProviderSettings,
 } from '../shared/ipc';
+import { log } from './log';
 
 export interface WindowBounds {
   x?: number;
@@ -119,7 +120,7 @@ export function loadSettings(): Settings {
       } catch {
         // 보관에 실패해도 앱은 기본값으로 계속 실행한다
       }
-      console.warn(
+      log.warn(
         `설정 파일을 읽지 못해 기본값을 씁니다: ${(err as Error).message}`,
       );
     }

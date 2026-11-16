@@ -11,6 +11,8 @@ export const IPC = {
   startChat: 'chat:start',
   listLocalModels: 'local:list-models', // 11-3: Ollama에 설치된 대화 모델 목록
   enableLocalAi: 'local-ai:enable', // 12-1: Local AI Handler를 처음 필요할 때 시작
+  reportError: 'log:renderer-error', // 12-4: 화면에서 난 오류를 Main 로그로
+  openLogs: 'log:open-folder', // 12-4: 로그 폴더 열기
 } as const;
 
 // openai: 사용자가 자기 API 키로 직접 / proxy: 회사 중계 서버에 사용자 토큰으로 (11-2)
@@ -95,6 +97,8 @@ export interface ExposedApi {
   clearSecret(provider: ProviderId): Promise<void>;
   chat(request: ChatRequest, onEvent: (event: ChatEvent) => void): ChatHandle;
   enableLocalAi(): Promise<void>;
+  reportError(message: string): void;
+  openLogs(): Promise<void>;
   listLocalModels(): Promise<
     { ok: true; models: string[] } | { ok: false; message: string }
   >;

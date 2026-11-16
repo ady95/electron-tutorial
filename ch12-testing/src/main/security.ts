@@ -9,6 +9,7 @@ import {
   type WebFrameMain,
 } from 'electron';
 import { pathToFileURL } from 'node:url';
+import { log } from './log';
 
 // 앱 화면의 주소. 개발 중에는 Vite 개발 서버, 배포 후에는 패키지 안의 index.html
 let appUrl: URL | null = null;
@@ -69,7 +70,7 @@ export function handle(
 ) {
   ipcMain.handle(channel, (event, ...args) => {
     if (!isTrustedFrame(event.senderFrame)) {
-      console.warn(
+      log.warn(
         `[보안] 신뢰할 수 없는 송신자 차단: ${channel} from ${describe(event.senderFrame)}`,
       );
       throw new Error('허용되지 않은 요청입니다.');
@@ -84,7 +85,7 @@ export function on(
 ) {
   ipcMain.on(channel, (event, ...args) => {
     if (!isTrustedFrame(event.senderFrame)) {
-      console.warn(
+      log.warn(
         `[보안] 신뢰할 수 없는 송신자 차단: ${channel} from ${describe(event.senderFrame)}`,
       );
       return;
@@ -98,7 +99,7 @@ function hardenContents(contents: WebContents) {
   contents.on('will-navigate', (event, url) => {
     if (!isAppUrl(url)) {
       event.preventDefault();
-      console.warn(`[보안] 앱 밖으로 이동 차단: ${url}`);
+      log.warn(`[보안] 앱 밖으로 이동 차단: ${url}`);
     }
   });
   contents.setWindowOpenHandler(({ url }) => {
@@ -106,7 +107,7 @@ function hardenContents(contents: WebContents) {
     if (url.startsWith('https://')) {
       void shell.openExternal(url);
     } else {
-      console.warn(`[보안] 새 창 열기 차단: ${url}`);
+      log.warn(`[보안] 새 창 열기 차단: ${url}`);
     }
     return { action: 'deny' };
   });
@@ -129,7 +130,7 @@ export function applySecurity() {
     session.defaultSession.setPermissionRequestHandler(
       (wc, permission, callback, details) => {
         const ok = allowed(permission, details.requestingUrl ?? wc.getURL());
-        if (!ok) console.warn(`[보안] 권한 요청 거부: ${permission}`);
+        if (!ok) log.warn(`[보안] 권한 요청 거부: ${permission}`);
         callback(ok);
       },
     );

@@ -189,6 +189,11 @@ export default function SettingsPanel({
         </>
       )}
       {notice && <p className="result">{notice}</p>}
+      <h3>문제 해결</h3>
+      <div className="controls">
+        {/* 12-4: 오류가 나면 이 폴더의 main.log를 보내 달라고 안내한다 */}
+        <button onClick={() => window.api.openLogs()}>로그 폴더 열기</button>
+      </div>
       <div className="controls">
         <button onClick={onClose}>대화로 돌아가기</button>
       </div>
