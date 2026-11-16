@@ -10,8 +10,10 @@ import type {
 } from './shared/host';
 import type { PythonStatus, ReportResult } from './shared/ipc';
 import { PythonError, PythonWorker } from './host/python';
+import { PythonHttpWorker } from './host/python-http';
 
-let worker: PythonWorker | null = null;
+let worker: PythonWorker | PythonHttpWorker | null = null;
+let mode = '';
 const ports = new Set<MessagePortMain>(); // 연결된 화면 (창마다 하나)
 const running = new Map<string, number>(); // 화면의 jobId → 작업자 요청 id
 
@@ -33,7 +35,7 @@ async function status(): Promise<PythonStatus> {
       pandas: string;
       startupMs: number;
     };
-    return { ok: true, mode: 'utilityProcess', ...r };
+    return { ok: true, mode, ...r };
   } catch (err) {
     return { ok: false, message: errorOf(err).message };
   }
@@ -96,7 +98,11 @@ process.parentPort.on('message', (e) => {
   const msg = e.data as HostCommand;
   switch (msg.type) {
     case 'init':
-      worker = new PythonWorker(msg.python);
+      worker =
+        msg.transport === 'http'
+          ? new PythonHttpWorker(msg.python)
+          : new PythonWorker(msg.python);
+      mode = `utilityProcess · ${msg.transport}`;
       break;
     case 'connect': {
       const port = e.ports[0];

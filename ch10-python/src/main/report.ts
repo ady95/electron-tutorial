@@ -10,8 +10,16 @@ import {
 } from 'electron';
 import fs from 'node:fs';
 import path from 'node:path';
-import type { HostCommand, HostEvent, PythonCommand } from '../shared/host';
+import type {
+  HostCommand,
+  HostEvent,
+  PythonCommand,
+  Transport,
+} from '../shared/host';
 import { IPC, type InputFolder, type StartResult } from '../shared/ipc';
+
+const transport = (): Transport =>
+  process.env.SALES_BACKEND === 'http' ? 'http' : 'stdio';
 
 // 개발 중: python 폴더의 가상 환경(uv sync로 만든 .venv)의 python으로 worker.py를 실행한다
 export function pythonCommand(): PythonCommand {
@@ -22,9 +30,11 @@ export function pythonCommand(): PythonCommand {
       : path.join(dir, '.venv', 'bin', 'python');
   // 이미 쓰던 Python(pandas·openpyxl 설치됨)을 쓰려면 SALES_PYTHON에 경로를 넣는다
   const python = process.env.SALES_PYTHON || venvPython;
+  // 10-3 비교용: SALES_BACKEND=http이면 FastAPI 서버(server.py)로 실행한다
+  const script = transport() === 'http' ? 'server.py' : 'worker.py';
   return {
     command: python,
-    args: [path.join(dir, 'worker.py')],
+    args: [path.join(dir, script)],
     cwd: dir,
     notFoundHint: 'python 폴더에서 uv sync를 실행했는지 확인하세요.',
   };
@@ -47,7 +57,7 @@ function startHost() {
     },
   );
   host = child;
-  send({ type: 'init', python: pythonCommand() });
+  send({ type: 'init', python: pythonCommand(), transport: transport() });
   child.on('message', (m: HostEvent) => {
     if (m.type === 'finished') lastOutput = m.output;
   });
