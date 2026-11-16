@@ -8,7 +8,6 @@
 //   mock-xss          : 위험한 HTML이 섞인 답
 // 직접 실행: node tests/mock-llm.mjs 18080
 import http from 'node:http';
-import { pathToFileURL } from 'node:url';
 
 const sse = (obj) => `data: ${JSON.stringify(obj)}\n\n`;
 const chunk = (delta, finish = null) => ({
@@ -140,7 +139,9 @@ export function startMockLlm(port = 0) {
 }
 
 // node tests/mock-llm.mjs [port] 로 직접 실행할 때
-if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
-  const mock = await startMockLlm(Number(process.argv[2] ?? 18080));
-  console.log(`mock LLM: ${mock.url}`);
+// Playwright가 이 파일을 CommonJS로 바꿔 불러오므로 import.meta와 최상위 await를 쓰지 않는다
+if (process.argv[1]?.endsWith('mock-llm.mjs')) {
+  startMockLlm(Number(process.argv[2] ?? 18080)).then((mock) => {
+    console.log(`mock LLM: ${mock.url}`);
+  });
 }
