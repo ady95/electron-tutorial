@@ -1,0 +1,30 @@
+{
+  // 12-4: VS Code에서 Main 프로세스 디버깅
+  //  - "Main 디버깅 (Forge)": npm start와 같은 개발 서버를 띄우고 Main에 디버거를 붙인다
+  //  - "실행 중인 Main에 붙기": npm start -- --inspect-electron 으로 띄운 앱(포트 9229)에 붙는다
+  // 화면(Renderer)은 앱 창의 개발자 도구(Ctrl+Shift+I, macOS는 Cmd+Option+I)로 디버깅한다
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Main 디버깅 (Forge)",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron-forge-vscode-nix",
+      "windows": {
+        "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron-forge-vscode-win.cmd"
+      },
+      "sourceMaps": true,
+      "outFiles": ["${workspaceFolder}/.vite/build/**/*.cjs"],
+      "console": "integratedTerminal"
+    },
+    {
+      "type": "node",
+      "request": "attach",
+      "name": "실행 중인 Main에 붙기 (9229)",
+      "port": 9229,
+      "sourceMaps": true,
+      "outFiles": ["${workspaceFolder}/.vite/build/**/*.cjs"]
+    }
+  ]
+}
