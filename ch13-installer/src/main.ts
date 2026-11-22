@@ -15,6 +15,7 @@ import { setupCrashHandling } from './main/crash';
 import { log, logDir } from './main/log';
 import { ensureLocalAi, updateLocalAi } from './main/local-ai';
 import { listChatModels } from './main/ollama';
+import { notifyAnswerDone } from './main/notify';
 import { currentBaseUrl, defaultsView, originOf } from './main/providers';
 import { clearKey, keyStatus, saveKey } from './main/secrets';
 import {
@@ -163,7 +164,8 @@ handle(IPC.openLogs, async () => {
 // Renderer가 MessagePort를 함께 보낸다. 포트가 없으면 응답을 돌려줄 곳이 없으니 무시한다
 on(IPC.startChat, (event, request: unknown) => {
   const [port] = event.ports;
-  if (port) startChat(port, request);
+  const win = BrowserWindow.fromWebContents(event.sender);
+  if (port) startChat(port, request, () => notifyAnswerDone(win));
 });
 
 app.whenReady().then(() => {

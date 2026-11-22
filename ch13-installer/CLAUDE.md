@@ -18,6 +18,8 @@
 - `proxy/server.mjs` — 회사 중계 서버 예제 (앱과 별도로 실행)
 - `src/ai-handler.ts` + `src/main/local-ai.ts` — Local AI Handler (실험 기능, UtilityProcess)
 - `src/main/log.ts`, `src/main/crash.ts` — 로그 파일, 크래시·예외 처리 (12-4)
+- `src/main/notify.ts` — 답변 완료 알림. 리소스 파일은 `resourcePath()`로 찾는다 (13-2)
+- `assets/` — 앱 아이콘 원본(`icon.png`, 1024×1024)과 만든 `.ico`·`.icns` (`scripts/make-icons.cjs`)
 - `src/preload.ts` — 요청마다 MessageChannel. 포트는 화면에 넘기지 않는다
 - `src/renderer/` — 화면. `markdown.ts`만 HTML을 만든다
 - `src/shared/` — 공용 타입과 순수 함수 (테스트 대상)
@@ -60,6 +62,13 @@
 - 화면 오류는 `window.api.reportError`로 Main 로그에 모인다. 사용자에게는 원문 대신 할 일을 안내한다
 - 배포본에서 개발자 도구와 원격 디버깅 스위치를 다시 허용하지 않는다
 - 소스맵은 개발 빌드에만 만든다
+
+## 배포 규칙 (13장)
+
+- 파일 이름(실행 파일, 설치 파일)은 ASCII(`ai-chat`)로 한다. 화면에 보이는 이름은 productName("AI 채팅")
+- Squirrel의 `name`(설치 폴더·AppUserModelID)과 macOS `appBundleId`는 첫 배포 뒤에 바꾸지 않는다. 바꾸면 다른 앱이 된다
+- 아이콘을 바꾸면 `assets/icon.png`만 고치고 `npx electron scripts/make-icons.cjs`로 다시 만든다
+- 패키지 앱이 읽는 파일은 `extraResource`로 넣고 `resourcePath()`로 찾는다. 개발 중 경로를 그대로 쓰지 않는다
 
 ## 보안 규칙
 

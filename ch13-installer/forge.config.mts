@@ -9,11 +9,28 @@ import { FuseV1Options, FuseVersion } from '@electron/fuses';
 // 13-1: 파일 이름에 쓰는 ASCII 이름. 화면에 보이는 이름은 package.json의 productName("AI 채팅")
 // 한글 productName을 파일 이름에 그대로 쓰면 Windows에서 자모가 분리된 이름(NFD)이 된다 (12-3)
 const FILE_NAME = 'ai-chat';
+const ICON_URL =
+  'https://raw.githubusercontent.com/ady95/electron-tutorial/main/ch13-installer/assets/icon.ico';
 
 const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
-    executableName: FILE_NAME, // ai-chat.exe, macOS는 Contents/MacOS/ai-chat
+    // Windows만 ai-chat.exe로. macOS에서 지정하면 Dock·Finder에 쓰이는 CFBundleDisplayName까지
+    // "ai-chat"이 된다(@electron/packager가 실행 파일 이름으로 덮어쓴다)
+    executableName: process.platform === 'win32' ? FILE_NAME : undefined,
+    // 13-2: 아이콘은 확장자 없이 쓰면 OS에 맞는 파일(.ico / .icns)을 고른다
+    icon: 'assets/icon',
+    // macOS 번들 ID. 정하지 않으면 앱 이름에서 만들어지는데, 한글 이름은 "com.electron.ai-"처럼 잘렸다
+    appBundleId: 'com.example.aichat',
+    appCopyright: 'Copyright (c) 2026 Electron 따라하기',
+    // Windows 실행 파일의 속성(자세히) 탭과 작업 관리자에 보이는 정보
+    win32metadata: {
+      CompanyName: 'Electron 따라하기',
+      FileDescription: 'AI 채팅',
+      ProductName: 'AI 채팅',
+    },
+    // asar 밖, resources 폴더에 그대로 복사할 파일 (알림 아이콘)
+    extraResource: ['assets/icon.png'],
   },
   rebuildConfig: {},
   makers: [
@@ -21,9 +38,13 @@ const config: ForgeConfig = {
       // 설치 폴더(%LOCALAPPDATA%\ai_chat)와 AppUserModelID를 정한다. 첫 배포 뒤에는 바꾸지 않는다
       name: 'ai_chat',
       setupExe: `${FILE_NAME}-setup.exe`,
+      setupIcon: 'assets/icon.ico', // 설치 파일(Setup.exe)의 아이콘
+      // 앱 목록·제어판의 아이콘. 설치할 때 사용자 PC가 이 주소에서 내려받는다 (file: 주소 불가)
+      iconUrl: ICON_URL,
+      description: 'AI 채팅', // Setup.exe 속성의 설명 (없으면 package.json의 description)
     }),
     new MakerZIP({}, ['darwin']),
-    new MakerDMG({ name: FILE_NAME }, ['darwin']),
+    new MakerDMG({ name: FILE_NAME, icon: 'assets/icon.icns' }, ['darwin']),
   ],
   plugins: [
     new VitePlugin({

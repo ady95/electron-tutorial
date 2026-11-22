@@ -105,8 +105,15 @@ export function parseChatRequest(value: unknown): ChatRequest | null {
   return { provider: value.provider as ProviderId, messages };
 }
 
-export function startChat(port: MessagePortMain, value: unknown) {
-  const post = (event: ChatEvent) => port.postMessage(event);
+export function startChat(
+  port: MessagePortMain,
+  value: unknown,
+  onDone?: () => void, // 13-2: 답변이 끝까지 왔을 때 (알림용)
+) {
+  const post = (event: ChatEvent) => {
+    port.postMessage(event);
+    if (event.type === 'done') onDone?.();
+  };
   const req = parseChatRequest(value);
   if (!req) {
     post({ type: 'error', message: '잘못된 요청입니다.' });
