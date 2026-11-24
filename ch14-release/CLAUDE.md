@@ -19,6 +19,7 @@
 - `src/ai-handler.ts` + `src/main/local-ai.ts` — Local AI Handler (실험 기능, UtilityProcess)
 - `src/main/log.ts`, `src/main/crash.ts` — 로그 파일, 크래시·예외 처리 (12-4)
 - `src/main/notify.ts` — 답변 완료 알림. 리소스 파일은 `resourcePath()`로 찾는다 (13-2)
+- `src/main/updater.ts` — 자동 업데이트 (update-electron-app, 배포본에서만) (14-3)
 - `assets/` — 앱 아이콘 원본(`icon.png`, 1024×1024)과 만든 `.ico`·`.icns` (`scripts/make-icons.cjs`)
 - `src/preload.ts` — 요청마다 MessageChannel. 포트는 화면에 넘기지 않는다
 - `src/renderer/` — 화면. `markdown.ts`만 HTML을 만든다
@@ -73,6 +74,15 @@
 - 서명한 실행 파일은 고치지 않는다 (Fuse 변경 포함). 바꿀 것이 있으면 서명 전 단계(설정)에서 바꾸고 다시 만든다
 - macOS 빌드는 `osxSign`으로 번들 전체를 서명한다. 만든 뒤 `codesign --verify --deep --strict`로 확인한다
 - 사용자에게 `xattr -dr com.apple.quarantine`을 안내하지 않는다. 서명이 깨진 앱도 검사 없이 열린다
+
+## 배포 자동화 규칙 (14장)
+
+- 워크플로는 저장소 루트 `.github/workflows/`에 있다 (`ch14-ci.yml`, `ch14-release.yml`). 이 폴더가 바뀔 때만 CI가 돈다
+- 릴리스는 `package.json`의 버전을 올리고 같은 이름의 태그(`v1.0.1`)를 push해서만 만든다. 손으로 Release를 만들거나 파일을 올리지 않는다
+- 이미 공개한 버전 번호는 다시 쓰지 않는다. 잘못 배포했으면 버전을 올려 다시 배포한다
+- 인증서·토큰은 GitHub 저장소 비밀 값(secrets)에만 둔다. 워크플로에서 값을 출력하지 않는다
+- 워크플로 권한(`permissions`)은 필요한 만큼만: CI는 읽기, 릴리스는 쓰기
+- 자동 업데이트의 저장소 이름(`updater.ts`)은 바꾸지 않는다. 설치된 앱은 그 주소만 본다
 
 ## 보안 규칙
 

@@ -42,6 +42,7 @@ export interface SettingsView {
   saved: LlmSettings;
   // 환경 변수(.env)에서 온 기본값. 키 값은 보내지 않고 있는지만 알린다
   defaults: Record<ProviderId, ProviderSettings & { hasKey: boolean }>;
+  version: string; // 14-3: 앱 버전 (업데이트 확인, 문의 대응)
 }
 
 export interface SecretStatus {

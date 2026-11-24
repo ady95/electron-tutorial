@@ -33,9 +33,11 @@ npm run proxy                      # http://127.0.0.1:8787/v1
 
 ## 단계별 태그
 
-| 태그         | 내용                                                                                          |
-| ------------ | --------------------------------------------------------------------------------------------- |
-| `ch14-step1` | CI: push·PR마다 Windows·macOS에서 검사·GUI 테스트·설치 파일 (`.github/workflows/ch14-ci.yml`) |
+| 태그         | 내용                                                                                                                                                                             |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ch14-step1` | CI: push·PR마다 Windows·macOS에서 검사·GUI 테스트·설치 파일 (`.github/workflows/ch14-ci.yml`)                                                                                    |
+| `ch14-step2` | GitHub Releases: `v버전` 태그를 push하면 초안 → 두 OS 빌드·업로드(Windows는 저장소 비밀 값의 인증서로 서명) → 공개 (`.github/workflows/ch14-release.yml`, Forge GitHub 퍼블리셔) |
+| `ch14-step3` | 자동 업데이트: update-electron-app + update.electronjs.org, 받은 뒤 다시 시작을 묻는다 (`src/main/updater.ts`)                                                                   |
 
 ## 구성
 

@@ -16,6 +16,7 @@ import { log, logDir } from './main/log';
 import { ensureLocalAi, updateLocalAi } from './main/local-ai';
 import { listChatModels } from './main/ollama';
 import { notifyAnswerDone } from './main/notify';
+import { startAutoUpdate } from './main/updater';
 import { currentBaseUrl, defaultsView, originOf } from './main/providers';
 import { clearKey, keyStatus, saveKey } from './main/secrets';
 import {
@@ -104,6 +105,7 @@ const isProvider = (v: unknown): v is ProviderId =>
 handle(IPC.getSettings, () => ({
   saved: getSettings().llm,
   defaults: defaultsView(),
+  version: app.getVersion(),
 }));
 
 handle(IPC.saveSettings, (_event, value: unknown) => {
@@ -172,6 +174,7 @@ app.whenReady().then(() => {
   mark('ready');
   loadSettings();
   createWindow();
+  startAutoUpdate(); // 14-3: 배포본에서만 동작한다
   // 11-4의 Local AI Handler는 여기서 시작하지 않는다. Prompt API 화면이 열릴 때 시작한다 (12-1)
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
