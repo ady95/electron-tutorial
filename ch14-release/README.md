@@ -33,11 +33,12 @@ npm run proxy                      # http://127.0.0.1:8787/v1
 
 ## 단계별 태그
 
-| 태그         | 내용                                                                                                                                                                             |
-| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ch14-step1` | CI: push·PR마다 Windows·macOS에서 검사·GUI 테스트·설치 파일 (`.github/workflows/ch14-ci.yml`)                                                                                    |
-| `ch14-step2` | GitHub Releases: `v버전` 태그를 push하면 초안 → 두 OS 빌드·업로드(Windows는 저장소 비밀 값의 인증서로 서명) → 공개 (`.github/workflows/ch14-release.yml`, Forge GitHub 퍼블리셔) |
-| `ch14-step3` | 자동 업데이트: update-electron-app + update.electronjs.org, 받은 뒤 다시 시작을 묻는다 (`src/main/updater.ts`)                                                                   |
+| 태그                    | 내용                                                                                                                                                                             |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ch14-step1`            | CI: push·PR마다 Windows·macOS에서 검사·GUI 테스트·설치 파일 (`.github/workflows/ch14-ci.yml`)                                                                                    |
+| `ch14-step2`            | GitHub Releases: `v버전` 태그를 push하면 초안 → 두 OS 빌드·업로드(Windows는 저장소 비밀 값의 인증서로 서명) → 공개 (`.github/workflows/ch14-release.yml`, Forge GitHub 퍼블리셔) |
+| `ch14-step3`            | 자동 업데이트: update-electron-app + update.electronjs.org, 받은 뒤 다시 시작을 묻는다 (`src/main/updater.ts`)                                                                   |
+| `ch14-step4` (= `ch14`) | 실습: 버전 1.0.1로 올리고 `v1.0.1` 태그 push → 설치된 1.0.0이 업데이트 (Windows). macOS는 임시 서명이라 서명 검증에서 실패                                                       |
 
 ## 구성
 
@@ -104,6 +105,21 @@ Get-AuthenticodeSignature "out\make\squirrel.windows\x64\ai-chat-setup.exe"
 codesign --verify --deep --strict --verbose=2 "out/AI 채팅-darwin-arm64/AI 채팅.app"
 codesign -dv "out/AI 채팅-darwin-arm64/AI 채팅.app"   # Signature=adhoc
 ```
+
+## 릴리스 내기 (14장)
+
+워크플로는 저장소 맨 위의 `.github/workflows/`에 있습니다. 포크해서 쓰려면 `forge.config.mts`의 퍼블리셔 저장소와 `src/main/updater.ts`의 저장소 이름을 내 저장소로 바꾸세요.
+
+```bash
+npm version 1.0.2 --no-git-tag-version     # package.json·package-lock.json 버전
+git commit -am "ch14-release: 버전 1.0.2"
+git tag v1.0.2
+git push origin main v1.0.2                 # 태그 push → 릴리스 워크플로
+```
+
+- Windows 서명(선택): 저장소 비밀 값 `WINDOWS_CERTIFICATE_BASE64`(pfx를 base64로), `WINDOWS_CERTIFICATE_PASSWORD`. 없으면 서명 없이 만든다
+- 자동 업데이트는 공개 저장소의 공개 릴리스만 본다(update.electronjs.org). 릴리스 뒤 서비스에 반영되기까지 몇 분 걸린다
+- macOS 자동 업데이트에는 Developer ID 서명이 필요하다. 임시 서명 앱은 받은 업데이트가 서명 검증에서 실패한다
 
 ## 검증
 
