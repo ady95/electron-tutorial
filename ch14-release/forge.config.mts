@@ -2,6 +2,7 @@ import type { ForgeConfig } from '@electron-forge/shared-types';
 import { MakerSquirrel } from '@electron-forge/maker-squirrel';
 import { MakerZIP } from '@electron-forge/maker-zip';
 import { MakerDMG } from '@electron-forge/maker-dmg';
+import { PublisherGitHub } from '@electron-forge/publisher-github';
 import { VitePlugin } from '@electron-forge/plugin-vite';
 import { FusesPlugin } from '@electron-forge/plugin-fuses';
 import { FuseV1Options, FuseVersion } from '@electron/fuses';
@@ -67,6 +68,14 @@ const config: ForgeConfig = {
     }),
     new MakerZIP({}, ['darwin']),
     new MakerDMG({ name: FILE_NAME, icon: 'assets/icon.icns' }, ['darwin']),
+  ],
+  // 14-2: npm run release가 만든 설치 파일을 GitHub Releases의 "v버전" 릴리스에 올린다
+  // 토큰은 GITHUB_TOKEN 환경 변수로 받는다. 릴리스는 초안으로 두고, 두 OS가 다 올린 뒤 공개한다
+  publishers: [
+    new PublisherGitHub({
+      repository: { owner: 'ady95', name: 'electron-tutorial' },
+      draft: true,
+    }),
   ],
   plugins: [
     new VitePlugin({
