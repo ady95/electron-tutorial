@@ -37,6 +37,7 @@ npm run proxy                      # http://127.0.0.1:8787/v1
 | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `ch13-step1` | 메이커 정리(Windows Squirrel, macOS ZIP·DMG), 파일 이름은 ASCII(`ai-chat`), Squirrel 설치 이름                                                                 |
 | `ch13-step2` | 아이콘(`assets/icon.png` → `.ico`·`.icns`, `npx electron scripts/make-icons.cjs`), 실행 파일 속성·번들 ID·저작권, 배포 리소스(`extraResource`), 답변 완료 알림 |
+| `ch13-step3` | Windows 코드 서명: 환경 변수로 인증서를 받아 앱 폴더와 Setup.exe·Update.exe에 서명 (`windowsSign`)                                                             |
 
 ## 구성
 
@@ -82,6 +83,17 @@ Windows PowerShell에서는 `$env:CHAT_PERF="1"; npx electron .`로 실행합니
 npm run make
 # Windows: out/make/squirrel.windows/x64/ai-chat-setup.exe
 # macOS:   out/make/dmg/arm64/ai-chat.dmg, out/make/zip/darwin/arm64/*.zip
+```
+
+### Windows 코드 서명 (13-3)
+
+인증서(.pfx)와 암호는 저장소에 넣지 않고 환경 변수로 넘깁니다. 두 값이 없으면 서명하지 않고 만듭니다.
+
+```powershell
+$env:WINDOWS_CERTIFICATE_FILE = "C:\certs\codesign.pfx"
+$env:WINDOWS_CERTIFICATE_PASSWORD = "<암호>"
+npm run make
+Get-AuthenticodeSignature "out\make\squirrel.windows\x64\ai-chat-setup.exe"
 ```
 
 ## 검증

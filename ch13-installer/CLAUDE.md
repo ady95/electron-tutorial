@@ -69,6 +69,8 @@
 - Squirrel의 `name`(설치 폴더·AppUserModelID)과 macOS `appBundleId`는 첫 배포 뒤에 바꾸지 않는다. 바꾸면 다른 앱이 된다
 - 아이콘을 바꾸면 `assets/icon.png`만 고치고 `npx electron scripts/make-icons.cjs`로 다시 만든다
 - 패키지 앱이 읽는 파일은 `extraResource`로 넣고 `resourcePath()`로 찾는다. 개발 중 경로를 그대로 쓰지 않는다
+- 인증서 파일·암호는 저장소와 설정 파일에 넣지 않는다. `WINDOWS_CERTIFICATE_FILE`·`WINDOWS_CERTIFICATE_PASSWORD` 환경 변수로만 받는다
+- 서명한 실행 파일은 고치지 않는다 (Fuse 변경 포함). 바꿀 것이 있으면 서명 전 단계(설정)에서 바꾸고 다시 만든다
 
 ## 보안 규칙
 

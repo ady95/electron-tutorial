@@ -12,6 +12,17 @@ const FILE_NAME = 'ai-chat';
 const ICON_URL =
   'https://raw.githubusercontent.com/ady95/electron-tutorial/main/ch13-installer/assets/icon.ico';
 
+// 13-3: Windows 코드 서명. 인증서 파일과 암호는 저장소에 두지 않고 환경 변수로 받는다
+// 값이 없으면 서명하지 않고 만든다 (개발 중, 또는 서명은 CI에서만 할 때)
+const { WINDOWS_CERTIFICATE_FILE, WINDOWS_CERTIFICATE_PASSWORD } = process.env;
+const windowsSign = WINDOWS_CERTIFICATE_FILE
+  ? {
+      certificateFile: WINDOWS_CERTIFICATE_FILE,
+      certificatePassword: WINDOWS_CERTIFICATE_PASSWORD,
+      timestampServer: 'http://timestamp.digicert.com', // 인증서가 만료된 뒤에도 서명이 유효하게
+    }
+  : undefined;
+
 const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
@@ -31,6 +42,8 @@ const config: ForgeConfig = {
     },
     // asar 밖, resources 폴더에 그대로 복사할 파일 (알림 아이콘)
     extraResource: ['assets/icon.png'],
+    // 앱 폴더의 .exe·.dll·.node에 서명한다 (Fuse를 바꾼 뒤에 서명된다)
+    windowsSign,
   },
   rebuildConfig: {},
   makers: [
@@ -42,6 +55,7 @@ const config: ForgeConfig = {
       // 앱 목록·제어판의 아이콘. 설치할 때 사용자 PC가 이 주소에서 내려받는다 (file: 주소 불가)
       iconUrl: ICON_URL,
       description: 'AI 채팅', // Setup.exe 속성의 설명 (없으면 package.json의 description)
+      windowsSign, // Setup.exe와 설치되는 Update.exe에 서명한다. 메이커에도 따로 넘겨야 한다
     }),
     new MakerZIP({}, ['darwin']),
     new MakerDMG({ name: FILE_NAME, icon: 'assets/icon.icns' }, ['darwin']),
