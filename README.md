@@ -29,6 +29,7 @@
 | `ch10-python` | 10장 | 매출 보고서 도우미: 기존 Python(pandas) 스크립트를 표준 입출력(JSON Lines) 작업자로 연결, UtilityProcess·MessagePort 분리, FastAPI 방식 비교, PyInstaller 패키징 (태그 `ch10-step1`~`ch10-step5`, `ch10`) |
 | `ch11-llm` | 11장 | AI 채팅: 원격 LLM 스트리밍(요청별 MessagePort, 마크다운 정화, 재시도), 요청 경로(내 API 키 / 회사 중계 서버 예제), 내 PC의 Ollama(컨텍스트·추론), 실험 기능 Local AI Handler (태그 `ch11-step1`~`ch11-step4`, `ch11`) |
 | `ch12-testing` | 12장 | AI 채팅 품질 다지기: 성능 측정(시작 시간·메모리), Vitest 단위 테스트 57개, Playwright GUI 테스트 7개와 패키지 스모크 테스트, 로그·크래시 처리, 배포본 디버깅 차단 (태그 `ch12-step1`~`ch12-step4`, `ch12`) |
+| `ch13-installer` | 13장 | AI 채팅 설치 파일: Squirrel Setup.exe·DMG·ZIP, ASCII 파일 이름, 아이콘 생성 스크립트, 실행 파일·번들 정보, 배포 리소스와 답변 완료 알림, Windows 코드 서명(환경 변수), macOS 임시 서명 (태그 `ch13-step1`~`ch13-step4`, `ch13`) |
 
 장이 진행되면서 폴더가 추가됩니다. 단계별 결과는 Git 태그(예: `ch02`)로도 받을 수 있습니다.
 
