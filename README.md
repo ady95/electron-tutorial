@@ -32,6 +32,8 @@
 | `ch13-installer` | 13장 | AI 채팅 설치 파일: Squirrel Setup.exe·DMG·ZIP, ASCII 파일 이름, 아이콘 생성 스크립트, 실행 파일·번들 정보, 배포 리소스와 답변 완료 알림, Windows 코드 서명(환경 변수), macOS 임시 서명 (태그 `ch13-step1`~`ch13-step4`, `ch13`) |
 | `ch14-release` | 14장 | AI 채팅 배포 자동화: GitHub Actions CI(Windows·macOS 검사·GUI 테스트·설치 파일), 태그 push로 GitHub Releases 배포(CI 서명), update-electron-app 자동 업데이트 (태그 `ch14-step1`~`ch14-step4`, `ch14`, 릴리스 `v1.0.0`·`v1.0.1`) |
 
+15장(Electron 업그레이드, Tauri 비교, 후속 프로젝트)은 새 폴더 없이 `ch14-release`를 기준으로 설명합니다.
+
 장이 진행되면서 폴더가 추가됩니다. 단계별 결과는 Git 태그(예: `ch02`)로도 받을 수 있습니다.
 
 ## 실행 방법
