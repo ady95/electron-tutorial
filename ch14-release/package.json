@@ -1,7 +1,7 @@
 {
   "name": "ch14-release",
   "productName": "AI 채팅",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "14장: GitHub Actions 빌드와 자동 업데이트",
   "keywords": [],
