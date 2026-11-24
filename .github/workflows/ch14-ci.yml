@@ -1,0 +1,62 @@
+# 14-1: push·PR마다 Windows와 macOS에서 검사하고 설치 파일을 만든다
+# 예제 저장소에는 장별 폴더가 여럿 있으므로 ch14-release가 바뀔 때만 실행한다
+name: ch14 CI
+
+on:
+  push:
+    branches: [main]
+    paths: ['ch14-release/**', '.github/workflows/ch14-ci.yml']
+  pull_request:
+    paths: ['ch14-release/**', '.github/workflows/ch14-ci.yml']
+  workflow_dispatch: # Actions 탭에서 직접 실행
+
+permissions:
+  contents: read # 코드를 읽기만 한다
+
+defaults:
+  run:
+    working-directory: ch14-release
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false # 한 OS가 실패해도 다른 OS 결과를 끝까지 본다
+      matrix:
+        os: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 26
+          cache: npm
+          cache-dependency-path: ch14-release/package-lock.json
+
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - run: npm run check:security
+      - run: npm run e2e
+
+      - name: GUI 테스트 실패 기록 올리기
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ runner.os }}
+          path: ch14-release/test-results
+          retention-days: 7
+
+      - run: npm run make
+
+      - name: 설치 파일 올리기
+        uses: actions/upload-artifact@v4
+        with:
+          name: installer-${{ runner.os }}
+          path: |
+            ch14-release/out/make/**/*.exe
+            ch14-release/out/make/**/*.dmg
+            ch14-release/out/make/**/*.zip
+          retention-days: 7
