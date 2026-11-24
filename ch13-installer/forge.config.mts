@@ -44,6 +44,14 @@ const config: ForgeConfig = {
     extraResource: ['assets/icon.png'],
     // 앱 폴더의 .exe·.dll·.node에 서명한다 (Fuse를 바꾼 뒤에 서명된다)
     windowsSign,
+    // 13-4: macOS 임시 서명(ad-hoc). 인증서 없이 앱 번들 전체를 다시 서명한다
+    // 서명하지 않으면 Info.plist를 바꾼 뒤의 번들이 "손상된 앱"으로 보인다
+    // 하드닝 런타임과 타임스탬프는 공증용이므로 끈다 (임시 서명은 공증받을 수 없다)
+    osxSign: {
+      identity: '-',
+      identityValidation: false,
+      optionsForFile: () => ({ hardenedRuntime: false, timestamp: 'none' }),
+    },
   },
   rebuildConfig: {},
   makers: [

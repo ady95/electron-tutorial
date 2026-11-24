@@ -33,11 +33,12 @@ npm run proxy                      # http://127.0.0.1:8787/v1
 
 ## 단계별 태그
 
-| 태그         | 내용                                                                                                                                                           |
-| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ch13-step1` | 메이커 정리(Windows Squirrel, macOS ZIP·DMG), 파일 이름은 ASCII(`ai-chat`), Squirrel 설치 이름                                                                 |
-| `ch13-step2` | 아이콘(`assets/icon.png` → `.ico`·`.icns`, `npx electron scripts/make-icons.cjs`), 실행 파일 속성·번들 ID·저작권, 배포 리소스(`extraResource`), 답변 완료 알림 |
-| `ch13-step3` | Windows 코드 서명: 환경 변수로 인증서를 받아 앱 폴더와 Setup.exe·Update.exe에 서명 (`windowsSign`)                                                             |
+| 태그                    | 내용                                                                                                                                                           |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ch13-step1`            | 메이커 정리(Windows Squirrel, macOS ZIP·DMG), 파일 이름은 ASCII(`ai-chat`), Squirrel 설치 이름                                                                 |
+| `ch13-step2`            | 아이콘(`assets/icon.png` → `.ico`·`.icns`, `npx electron scripts/make-icons.cjs`), 실행 파일 속성·번들 ID·저작권, 배포 리소스(`extraResource`), 답변 완료 알림 |
+| `ch13-step3`            | Windows 코드 서명: 환경 변수로 인증서를 받아 앱 폴더와 Setup.exe·Update.exe에 서명 (`windowsSign`)                                                             |
+| `ch13-step4` (= `ch13`) | macOS 임시 서명(ad-hoc, `osxSign`의 `identity: '-'`): Info.plist를 바꾼 번들을 다시 서명해 "손상된 앱" 경고를 없앤다                                           |
 
 ## 구성
 
@@ -94,6 +95,15 @@ $env:WINDOWS_CERTIFICATE_FILE = "C:\certs\codesign.pfx"
 $env:WINDOWS_CERTIFICATE_PASSWORD = "<암호>"
 npm run make
 Get-AuthenticodeSignature "out\make\squirrel.windows\x64\ai-chat-setup.exe"
+```
+
+### macOS 임시 서명 (13-4)
+
+인증서 없이 앱 번들 전체를 임시 서명(ad-hoc)합니다. 서명 검사는 통과하지만 공증(notarization)을 받지 않았으므로, 내려받은 앱을 처음 열 때 Gatekeeper가 막습니다. 시스템 설정 → 개인정보 보호 및 보안 → [그래도 열기]로 엽니다.
+
+```bash
+codesign --verify --deep --strict --verbose=2 "out/AI 채팅-darwin-arm64/AI 채팅.app"
+codesign -dv "out/AI 채팅-darwin-arm64/AI 채팅.app"   # Signature=adhoc
 ```
 
 ## 검증
