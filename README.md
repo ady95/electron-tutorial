@@ -30,7 +30,7 @@
 | `ch11-llm` | 11장 | AI 채팅: 원격 LLM 스트리밍(요청별 MessagePort, 마크다운 정화, 재시도), 요청 경로(내 API 키 / 회사 중계 서버 예제), 내 PC의 Ollama(컨텍스트·추론), 실험 기능 Local AI Handler (태그 `ch11-step1`~`ch11-step4`, `ch11`) |
 | `ch12-testing` | 12장 | AI 채팅 품질 다지기: 성능 측정(시작 시간·메모리), Vitest 단위 테스트 57개, Playwright GUI 테스트 7개와 패키지 스모크 테스트, 로그·크래시 처리, 배포본 디버깅 차단 (태그 `ch12-step1`~`ch12-step4`, `ch12`) |
 | `ch13-installer` | 13장 | AI 채팅 설치 파일: Squirrel Setup.exe·DMG·ZIP, ASCII 파일 이름, 아이콘 생성 스크립트, 실행 파일·번들 정보, 배포 리소스와 답변 완료 알림, Windows 코드 서명(환경 변수), macOS 임시 서명 (태그 `ch13-step1`~`ch13-step4`, `ch13`) |
-| `ch14-release` | 14장 | AI 채팅 배포 자동화: GitHub Actions CI(Windows·macOS 검사·GUI 테스트·설치 파일), 태그 push로 GitHub Releases 배포(CI 서명), update-electron-app 자동 업데이트 (태그 `ch14-step1`~`ch14-step4`, `ch14`, 릴리스 `v1.0.0`·`v1.0.1`) |
+| `ch14-release` | 14장 | AI 채팅 배포 자동화: GitHub Actions CI(Windows·macOS 검사·GUI 테스트·설치 파일), 태그 push로 GitHub Releases 배포(CI 서명), update-electron-app 자동 업데이트 (태그 `ch14-step1`~`ch14-step4`, `ch14`. 실측용 릴리스 `v1.0.0`·`v1.0.1`은 실측 후 삭제) |
 
 15장(Electron 업그레이드, Tauri 비교, 후속 프로젝트)은 새 폴더 없이 `ch14-release`를 기준으로 설명합니다.
 
